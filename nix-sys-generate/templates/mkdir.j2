@@ -1,0 +1,10 @@
+struct mkdir_a to_mkdir[] = {
+	{% for value in values %}
+	{
+		.destination = "{{ value.name }}",
+		.mode = {{ value.mode | default("0755") }},
+		.owner = {{ value.owner | default("0") }},
+		.group = {{ value.group | default("0") }},
+	},
+	{% endfor %}
+};

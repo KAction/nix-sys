@@ -1,0 +1,5 @@
+static const char *{{ name }} [] = {
+{% for v in values %}
+"{{ v }}",
+{% endfor %}
+};

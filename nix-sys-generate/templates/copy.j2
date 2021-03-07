@@ -1,0 +1,12 @@
+static const struct copy_a to_copy[] = {
+{% for target, manifest in rules %}
+  { .source = "{{ manifest.path }}"
+  , .tmp = "{{ target }}.{{ hash }}"
+  , .destination = "{{ target }}"
+  , .backup = "{{ target }}~"
+  , .mode = 0{{ manifest.mode }}
+  , .owner = {{ manifest.owner | default(0) }}
+  , .group = {{ manifest.group | default(0) }}
+  },
+{% endfor %}
+};

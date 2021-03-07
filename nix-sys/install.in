@@ -1,0 +1,6 @@
+#!/bin/sh -eu
+redo
+
+install -d "@out@/bin"
+install -m 755 ./nix-sys "@out@/bin"
+install -m 444 ./index.cdb "@cdb@"

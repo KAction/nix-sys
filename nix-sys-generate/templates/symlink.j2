@@ -1,0 +1,9 @@
+static const struct symlink_a to_symlink[] = {
+{% for target, manifest in rules %}
+  { .source = "{{ manifest.path }}"
+  , .tmp = "{{ target }}.{{ hash }}"
+  , .destination = "{{ target }}"
+  , .backup = "{{ target }}~"
+  },
+{% endfor %}
+};
