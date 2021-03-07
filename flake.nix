@@ -9,7 +9,10 @@
       };
       nix-sys-generate =
         pkgs.callPackage ./nix-sys-generate { inherit python3; };
-      nix-sys = pkgs.callPackage ./nix-sys { inherit nix-sys-generate; };
+      nix-sys = pkgs.callPackage ./nix-sys {
+        inherit (pkgs.pkgsStatic) stdenv;
+        inherit nix-sys-generate;
+      };
     in {
       packages.x86_64-linux = { inherit nix-sys nix-sys-generate; };
 
