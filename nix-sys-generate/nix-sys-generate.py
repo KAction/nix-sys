@@ -51,7 +51,7 @@ def make_output_config(out, manifest, hash, render, output_cdb):
 
     for target in manifest:
         another = parents.get(target)
-        if another and manifest[another]["action"] != "mkdir":
+        if another and manifest[target]["action"] != "mkdir":
             msg = f"Target `{target}' is parent of `{another}' target"
             raise ValueError(msg)
 
