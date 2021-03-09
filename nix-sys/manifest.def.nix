@@ -4,7 +4,7 @@ let
     "/etc/nix-sys.banner" = {
       path = writeText "banner.txt" "Configured with nix-sys";
       action = "copy";
-      mode = "444";
+      mode = "0444";
     };
   };
 in writeText "manifest.json" (builtins.toJSON manifest)
