@@ -1,6 +1,7 @@
 { stdenv, writeScriptBin, execline, python3 }:
 let
-  python = python3.withPackages (p: with p; [ click pure-cdb jinja2 ]);
+  python =
+    python3.withPackages (p: with p; [ click pure-cdb jinja2 jsonschema ]);
   script = stdenv.mkDerivation {
     name = "nix-sys-generate";
     dontUnpack = true;
@@ -13,5 +14,7 @@ let
   };
 in writeScriptBin "nix-sys-generate" ''
   #!${execline}/bin/execlineb -WS0
-  ${script}/bin/nix-sys-generate --template-directory ${./templates} $@
+  ${script}/bin/nix-sys-generate
+    --template-directory ${./templates}
+    $@
 ''

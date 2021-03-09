@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "action": {
+      "type": "string",
+      "const": "unlink"
+    }
+  },
+  "required": [
+    "action"
+  ],
+  "additionalProperties": false
+}

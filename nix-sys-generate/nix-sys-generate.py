@@ -2,8 +2,10 @@
 import click
 import json
 from os import path
+import sys
 import jinja2
 import functools
+import jsonschema
 import cdblib
 from operator import itemgetter
 
@@ -40,12 +42,35 @@ def parent_directories(filepath):
         yield parent
 
 
+def load_schema(cache, template_directory, action):
+    schema = cache.get(action)
+    if not schema:
+        with open(f"{template_directory}/schema/{action}.json") as fp:
+            schema = json.load(fp)
+        cache[action] = schema
+    return schema
+
+
+def validate_manifest(manifest, template_directory):
+    ask_schema = functools.partial(load_schema, {}, template_directory)
+    known_actions = ["copy", "symlink", "mkdir", "unlink"]
+
+    for target, definition in manifest.items():
+        validate_target_path(target)
+        action = definition.get("action")
+        if action not in known_actions:
+            raise KeyError(f'Target {target} definition has no "action".')
+        try:
+            jsonschema.validate(instance=definition, schema=ask_schema(action))
+        except jsonschema.ValidationError as e:
+            e.message += f" in definition of target `{target}'"
+            raise e
+
+
 def make_output_config(out, manifest, hash, render, output_cdb):
     parents = {}
 
     for target in manifest:
-        validate_target_path(target)
-
         for parent in parent_directories(target):
             parents[parent] = target
 
@@ -94,6 +119,13 @@ def make_output_cdb(out, manifest):
 @click.option("--staged-output-cdb")
 def main(hash, manifest, template_directory, output_config, output_cdb, staged_output_cdb):
     manifest = json.loads(manifest)
+
+    try:
+        validate_manifest(manifest, template_directory)
+    except (jsonschema.ValidationError, KeyError, ValueError) as e:
+        print(e)
+        sys.exit(1)
+
     render = functools.partial(render_template, template_directory)
     manifest[CDB_PATH] = dict(path=output_cdb, action="symlink")
 
