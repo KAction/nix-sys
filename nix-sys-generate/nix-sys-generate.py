@@ -109,6 +109,11 @@ def make_output_cdb(out, manifest):
             target = target.encode("utf-8") + b"\0"
             out.put(target, parents)
 
+        paths = b"\0".join(action["path"].encode("utf-8")
+                           for action in manifest.values()
+                           if action["action"] == "symlink")
+        out.put("#gc", paths)
+
 
 @click.command()
 @click.option("--hash", required=True)
