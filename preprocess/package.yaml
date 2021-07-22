@@ -1,0 +1,23 @@
+name: nixsys-preprocess
+library:
+  source-dirs: src
+  dependencies:
+    - aeson
+    - base
+    - bytestring
+    - optparse-applicative
+    - path
+    - record-dot-preprocessor
+    - record-hasfield
+    - text
+    - yaml
+    - yamlparse-applicative
+  exposed-modules:
+    - NixSys.Main
+
+executables:
+  nixsys-preprocess:
+    main: Main.hs
+    dependencies:
+      - base
+      - nixsys-preprocess

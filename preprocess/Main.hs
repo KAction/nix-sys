@@ -1,0 +1,1 @@
+import NixSys.Main (main)
