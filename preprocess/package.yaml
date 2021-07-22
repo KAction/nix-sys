@@ -5,6 +5,7 @@ library:
     - aeson
     - base
     - bytestring
+    - containers
     - optparse-applicative
     - path
     - record-dot-preprocessor
