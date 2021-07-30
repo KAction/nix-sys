@@ -1,4 +1,5 @@
 name: nixsys-preprocess
+ghc-options: -Wall -Werror
 library:
   source-dirs: src
   dependencies:

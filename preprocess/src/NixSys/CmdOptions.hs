@@ -3,7 +3,20 @@
 module NixSys.CmdOptions where
 
 import Options.Applicative
-import System.IO (FilePath)
+  ( Parser,
+    execParser,
+    fullDesc,
+    help,
+    helper,
+    info,
+    long,
+    metavar,
+    progDesc,
+    showDefault,
+    strOption,
+    value,
+    (<**>),
+  )
 
 data CmdOptions = CmdOptions
   { -- It would be much simpler to just read from stdin, but ghci does not
