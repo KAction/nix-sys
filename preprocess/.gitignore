@@ -1,3 +1,5 @@
 *.cabal
 dist-newstyle
 dist
+tags
+input.json
