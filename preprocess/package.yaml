@@ -14,6 +14,7 @@ library:
     - record-hasfield
     - text
     - vector
+    - pure-cdb
     - unordered-containers
   exposed-modules:
     - NixSys.Main

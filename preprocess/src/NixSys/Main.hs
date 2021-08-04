@@ -7,8 +7,9 @@
 
 module NixSys.Main where
 
-import Control.Monad (join)
+import Control.Monad (forM_, join)
 import Data.Aeson (ToJSON (..), Value (..), eitherDecodeFileStrict, object)
+import qualified Data.ByteString as BS
 import Data.Coerce (coerce)
 import qualified Data.HashMap.Strict as HashMap
 import Data.List (inits)
@@ -17,29 +18,38 @@ import qualified Data.Map as Map
 import qualified Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Encoding as TEnc
 import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.Vector as Vector
+import Database.PureCDB (addBS, makeCDB)
 import NixSys.CmdOptions (CmdOptions (..), ioCmdOptions)
-import NixSys.Parser (Location (..), Spec (..))
+import NixSys.Parser (Location (..), Spec (..), SpecSymlink (path))
 import System.Exit (exitFailure)
 import Text.Mustache (renderMustache)
 import Text.Mustache.Compile.TH (compileMustacheFile)
+
+parents1 :: Location -> [Text]
+parents1 =
+  init
+    . filter (/= "")
+    . map (T.intercalate "/")
+    . inits
+    . T.splitOn "/"
+    . coerce
+
+targets :: Spec -> [Location]
+targets s =
+  Map.keys (copy s)
+    ++ Map.keys (mkdir s)
+    ++ Map.keys (symlink s)
 
 -- Return sorted list of parent directories of spec targets, so nix-sys
 -- do not need to do string manipulation in C.
 parents :: Spec -> [Text]
 parents s =
-  let locations =
-        coerce $
-          Map.keys (copy s)
-            ++ Map.keys (mkdir s)
-            ++ Map.keys (symlink s)
-      parents1 :: Text -> [Text]
-      parents1 = map (T.intercalate "/") . inits . T.splitOn "/"
-
-      sortAsc :: Ord a => [a] -> [a]
+  let sortAsc :: Ord a => [a] -> [a]
       sortAsc = Set.toList . Set.fromList
-   in sortAsc . filter (/= "") . join . map parents1 $ locations
+   in sortAsc . join . map parents1 $ targets s
 
 -- Mustache does not support iterating over dictionary keys, only over
 -- list elements, but 'Spec' datatype uses dictionary instead of list to
@@ -82,3 +92,18 @@ main = do
   let template = $(compileMustacheFile "./data/config.h.mustache")
   TIO.writeFile outputConfig $
     renderMustache template (specToContext spec "foo")
+  flip makeCDB outputCDB $ do
+    forM_ (targets spec) $ \key ->
+      let value =
+            BS.intercalate "\0"
+              . map TEnc.encodeUtf8
+              . reverse
+              . parents1
+              $ key
+       in addBS (TEnc.encodeUtf8 $ coerce key) (value <> "\0")
+    let gcref =
+          map (TEnc.encodeUtf8 . coerce . path . snd) $
+            Map.toList (symlink spec)
+    addBS "#gc" $ BS.intercalate "\0" gcref
+
+  pure ()

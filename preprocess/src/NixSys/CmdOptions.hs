@@ -24,11 +24,11 @@ data CmdOptions = CmdOptions
     -- make my development more pleasant. It sucks, I know.
     manifestFile :: FilePath,
     -- Path to write config.h
-    outputConfig :: FilePath
+    outputConfig :: FilePath,
     --     -- Path where database will be finally installed (probably $cdb output)
-    --     finalCDB :: FilePath,
+    -- finalCDB :: FilePath,
     --     -- Path to write constant database.
-    --     outputCDB :: f FilePath
+    outputCDB :: FilePath
   }
 
 cmdOptions :: Parser CmdOptions
@@ -46,6 +46,14 @@ cmdOptions =
           <> metavar "FILE"
           <> help "path to write output config.h"
           <> value "/dev/stdout"
+          <> showDefault
+      )
+    <*> strOption
+      ( long "output-cdb"
+          <> metavar "FILE"
+          <> help "path to write output cdb database"
+          <> value "out.cdb"
+          <> showDefault
       )
 
 ioCmdOptions :: IO CmdOptions
