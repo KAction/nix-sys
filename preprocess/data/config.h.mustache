@@ -31,12 +31,13 @@ static const struct symlink_a to_symlink[] = {
 {{/symlink}}
 };
 
-static const struct *parents[] = {
+static const char *parents[] = {
 {{#parents}}
 "{{ . }}",
 {{/parents}}
 };
 
+static const char *to_unlink[] = {};
 static const char *exec = "{{ exec }}";
 const char *newcdb_path = "{{ install_cdb }}";
 const char *oldcdb_path = "{{ CDB_PATH }}";
