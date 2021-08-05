@@ -23,10 +23,13 @@ import qualified Data.Text.Lazy.IO as TIO
 import qualified Data.Vector as Vector
 import Database.PureCDB (addBS, makeCDB)
 import NixSys.CmdOptions (CmdOptions (..), ioCmdOptions)
-import NixSys.Parser (Location (..), Spec (..), SpecSymlink (path))
+import NixSys.Parser (Location (..), Spec (..), SpecSymlink (..))
 import System.Exit (exitFailure)
 import Text.Mustache (renderMustache)
 import Text.Mustache.Compile.TH (compileMustacheFile)
+
+cdbPath :: Text
+cdbPath = "/nix/var/nix/gcroots/nixsys.cdb"
 
 parents1 :: Location -> [Text]
 parents1 =
@@ -85,15 +88,26 @@ specToContext s hash =
 main :: IO ()
 main = do
   CmdOptions {..} <- ioCmdOptions
-  spec <-
+  spec0 <-
     eitherDecodeFileStrict manifestFile >>= \case
       Left err -> putStrLn err >> exitFailure
       Right a -> pure a
+  let installCDB' = T.pack installCDB
+      addInstallCDB =
+        Map.insert (coerce cdbPath) (SpecSymlink (coerce installCDB'))
+      spec1 = spec0 {symlink = addInstallCDB (symlink spec0)}
+
   let template = $(compileMustacheFile "./data/config.h.mustache")
+      Object m0 = specToContext spec1 "foo"
+      value1 =
+        Object
+          . HashMap.insert "install_cdb" (String installCDB')
+          . HashMap.insert "CDB_PATH" (String cdbPath)
+          $ m0
   TIO.writeFile outputConfig $
-    renderMustache template (specToContext spec "foo")
+    renderMustache template value1
   flip makeCDB outputCDB $ do
-    forM_ (targets spec) $ \key ->
+    forM_ (targets spec1) $ \key ->
       let value =
             BS.intercalate "\0"
               . map TEnc.encodeUtf8
@@ -103,7 +117,7 @@ main = do
        in addBS (TEnc.encodeUtf8 $ coerce key) (value <> "\0")
     let gcref =
           map (TEnc.encodeUtf8 . coerce . path . snd) $
-            Map.toList (symlink spec)
+            Map.toList (symlink spec1)
     addBS "#gc" $ BS.intercalate "\0" gcref
 
   pure ()

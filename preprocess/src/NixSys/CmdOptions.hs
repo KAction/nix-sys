@@ -25,9 +25,9 @@ data CmdOptions = CmdOptions
     manifestFile :: FilePath,
     -- Path to write config.h
     outputConfig :: FilePath,
-    --     -- Path where database will be finally installed (probably $cdb output)
-    -- finalCDB :: FilePath,
-    --     -- Path to write constant database.
+    -- Path where database will be finally installed (probably $cdb output)
+    installCDB :: FilePath,
+    -- Path to write constant database.
     outputCDB :: FilePath
   }
 
@@ -47,6 +47,11 @@ cmdOptions =
           <> help "path to write output config.h"
           <> value "/dev/stdout"
           <> showDefault
+      )
+    <*> strOption
+      ( long "install-cdb"
+          <> metavar "FILE"
+          <> help "installation path of cdb database"
       )
     <*> strOption
       ( long "output-cdb"
