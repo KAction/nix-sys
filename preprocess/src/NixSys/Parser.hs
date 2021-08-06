@@ -7,13 +7,16 @@ module NixSys.Parser where
 import Control.Applicative ((<|>))
 import Control.Monad (unless, when)
 import Data.Aeson (withObject, withText, (.:), (.:?))
-import Data.Aeson.TH (defaultOptions, deriveToJSON)
+import Data.Aeson.TH (Options (..), defaultOptions, deriveToJSON)
 import Data.Aeson.Types
   ( FromJSON (..),
     FromJSONKey (..),
     FromJSONKeyFunction (..),
     Parser,
+    Value,
   )
+import Data.Functor (($>))
+import qualified Data.HashMap.Strict as H
 import Data.Map (Map)
 import qualified Data.Map as Map
 import Data.Maybe (fromMaybe)
@@ -74,7 +77,7 @@ data SpecCopy = SpecCopy
   }
   deriving (Show)
 
-$(deriveToJSON defaultOptions ''SpecCopy)
+$(deriveToJSON (defaultOptions {rejectUnknownFields = True}) ''SpecCopy)
 
 data SpecMkdir = SpecMkdir
   { mode :: Mode,
@@ -83,13 +86,22 @@ data SpecMkdir = SpecMkdir
   }
   deriving (Show)
 
-$(deriveToJSON defaultOptions ''SpecMkdir)
+$(deriveToJSON (defaultOptions {rejectUnknownFields = True}) ''SpecMkdir)
 
 newtype SpecSymlink = SpecSymlink {path :: Location}
   deriving (Show)
 
+checkKnownFields :: H.HashMap Text Value -> [Text] -> Parser ()
+checkKnownFields m kf = do
+  let known = H.fromList $ map (\x -> (x, ())) kf
+      actual = m $> ()
+      diff = map fst . H.toList $ H.difference actual known
+  unless (null diff) $ do
+    fail $ "unknownFields: " ++ show diff
+
 instance FromJSON SpecSymlink where
-  parseJSON = withObject "SpecSymlink" $ \o ->
+  parseJSON = withObject "SpecSymlink" $ \o -> do
+    checkKnownFields o ["path"]
     SpecSymlink <$> ((o .: "path") >>= parseLocation)
 
 $(deriveToJSON defaultOptions ''SpecSymlink)
@@ -103,13 +115,15 @@ data Spec = Spec
   deriving (Show)
 
 instance FromJSON SpecMkdir where
-  parseJSON = withObject "SpecMkdir" $ \o ->
+  parseJSON = withObject "SpecMkdir" $ \o -> do
+    checkKnownFields o ["mode", "owner", "group"]
     SpecMkdir <$> o .: "mode"
       <*> fmap (fromMaybe 0) (o .:? "owner")
       <*> fmap (fromMaybe 0) (o .:? "group")
 
 instance FromJSON SpecCopy where
-  parseJSON = withObject "SpecMkdir" $ \o ->
+  parseJSON = withObject "SpecMkdir" $ \o -> do
+    checkKnownFields o ["path", "mode", "owner", "group"]
     SpecCopy <$> o .: "path"
       <*> o .: "mode"
       <*> fmap (fromMaybe 0) (o .:? "owner")
@@ -122,7 +136,8 @@ instance FromJSON SpecCopy where
 -- I prefer to contain as much complexity as possible in the parser. This way I
 -- automatically get decent error messages.
 instance FromJSON Spec where
-  parseJSON = withObject "Spec" $ \o ->
+  parseJSON = withObject "Spec" $ \o -> do
+    checkKnownFields o ["copy", "mkdir", "symlink", "exec"]
     Spec
       <$> fmap (fromMaybe Map.empty) (o .:? "copy")
       <*> fmap (fromMaybe Map.empty) (o .:? "mkdir")
