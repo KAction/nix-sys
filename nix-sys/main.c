@@ -295,6 +295,10 @@ int main(int argc, char **argv)
 	int i, j;
 	struct cdb ix_new, ix_old;
 	unsigned int iter;
+	const char *const exec_argv[] = { exec, NULL };
+	/* exec script is deliberately run in empty environment. */
+	const char *const exec_envp[] = { NULL };
+	
 
 	write2("opening index of new generation... ");
 	err = xopen_cdb(&ix_new, newcdb_path, 0); /* missing_ok == false */
@@ -433,5 +437,11 @@ int main(int argc, char **argv)
 		close(ix_old.cdb_fd);
 	}
 
-	return status;
+	if (status != 0) {
+		return status;
+	}
+
+	if (*exec) {
+		return execve(exec, (void*)exec_argv, (void*)exec_envp);
+	}
 }

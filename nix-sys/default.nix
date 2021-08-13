@@ -1,5 +1,6 @@
 { stdenv, tinycdb, nixsys-preprocess, redo-c, cproto, linuxHeaders ? null
-, writeText, manifest ? import ./manifest.def.nix { inherit writeText; } }:
+, manifest ? import ./manifest.def.nix { inherit hello writeText; }, hello
+, writeText }:
 assert manifest != null;
 let
 in stdenv.mkDerivation {

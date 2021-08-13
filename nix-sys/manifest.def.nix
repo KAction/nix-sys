@@ -1,4 +1,4 @@
-{ writeText }:
+{ writeText, hello }:
 let
   manifest = {
     copy = {
@@ -7,5 +7,6 @@ let
         mode = "0444";
       };
     };
+    exec = "${hello}/bin/hello";
   };
 in writeText "manifest.json" (builtins.toJSON manifest)
