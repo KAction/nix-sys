@@ -310,6 +310,18 @@ int main(int argc, char **argv)
 	if (err)
 		return err;
 
+	for (i = 0; i != ARRAY_SIZE(parents); ++i) {
+		write2("creating directory ");
+		write2_s(parents[i]);
+		write2("... ");
+		err = mkdir(parents[i], 0755);
+		if (err && (errno != EEXIST)) {
+			write2("fail\n");
+			return 1;
+		}
+		write2("ok\n");
+	}
+
 	umask(0); /* always succeeds */
 	for (i = 0; i != ARRAY_SIZE(to_mkdir); ++i) {
 		write2("preparing directory "); 
