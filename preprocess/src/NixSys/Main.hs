@@ -114,7 +114,7 @@ main = do
               . reverse
               . parents1
               $ key
-       in addBS (TEnc.encodeUtf8 $ coerce key) (value <> "\0")
+       in addBS (TEnc.encodeUtf8 (coerce key) <> "\0") (value <> "\0")
     let gcref =
           map (TEnc.encodeUtf8 . coerce . path . snd) $
             Map.toList (symlink spec1)
