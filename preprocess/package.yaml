@@ -1,0 +1,27 @@
+name: nixsys-preprocess
+ghc-options: -Wall -Werror
+library:
+  source-dirs: src
+  dependencies:
+    - aeson
+    - base
+    - bytestring
+    - containers
+    - optparse-applicative
+    - stache
+    - path
+    - record-dot-preprocessor
+    - record-hasfield
+    - text
+    - vector
+    - pure-cdb
+    - unordered-containers
+  exposed-modules:
+    - NixSys.Main
+
+executables:
+  nixsys-preprocess:
+    main: Main.hs
+    dependencies:
+      - base
+      - nixsys-preprocess

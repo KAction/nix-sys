@@ -1,10 +1,12 @@
-{ writeText }:
+{ writeText, hello }:
 let
   manifest = {
-    "/etc/nix-sys.banner" = {
-      path = writeText "banner.txt" "Configured with nix-sys";
-      action = "copy";
-      mode = "0444";
+    copy = {
+      "/etc/nix-sys.banner" = {
+        path = writeText "banner.txt" "Configured with nix-sys";
+        mode = "0444";
+      };
     };
+    exec = "${hello}/bin/hello";
   };
 in writeText "manifest.json" (builtins.toJSON manifest)

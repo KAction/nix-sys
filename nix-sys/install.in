@@ -4,3 +4,4 @@ redo
 install -d "@out@/bin"
 install -m 755 ./nix-sys "@out@/bin"
 install -m 444 ./index.cdb "@cdb@"
+install -m 444 ./config.h "@config@"

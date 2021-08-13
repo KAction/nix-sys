@@ -1,0 +1,43 @@
+static const struct copy_a to_copy[] = {
+{{#copy}}
+ { .source = "{{ path }}"
+ , .tmp = "{{ target }}.{{ hash }}"
+ , .destination = "{{ target }}"
+ , .backup = "{{ target }}~"
+ , .mode = {{ mode }}
+ , .owner = {{ owner }}
+ , .group = {{ group }}
+ },
+{{/copy}}
+};
+
+struct mkdir_a to_mkdir[] = {
+{{#mkdir}}
+{ .destination = "{{ target }}"
+, .mode = {{ mode }}
+, .owner = {{ owner }}
+, .group = {{ group }},
+},
+{{/mkdir}}
+};
+
+static const struct symlink_a to_symlink[] = {
+{{#symlink}}
+{ .source = "{{ path }}"
+, .tmp = "{{ target }}.{{ hash }}"
+, .destination = "{{ target }}"
+, .backup = "{{ target }}~"
+},
+{{/symlink}}
+};
+
+static const char *parents[] = {
+{{#parents}}
+"{{ . }}",
+{{/parents}}
+};
+
+static const char *to_unlink[] = {};
+static const char *exec = "{{ exec }}";
+const char *newcdb_path = "{{ install_cdb }}";
+const char *oldcdb_path = "{{ CDB_PATH }}";

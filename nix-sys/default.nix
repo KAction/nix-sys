@@ -1,12 +1,13 @@
-{ stdenv, tinycdb, nix-sys-generate, redo-c, cproto, linuxHeaders ? null
-, writeText, manifest ? import ./manifest.def.nix { inherit writeText; } }:
+{ stdenv, tinycdb, nixsys-preprocess, redo-c, cproto, linuxHeaders ? null
+, manifest ? import ./manifest.def.nix { inherit hello writeText; }, hello
+, writeText }:
 assert manifest != null;
 let
 in stdenv.mkDerivation {
   name = "nix-sys";
   src = ./.;
-  outputs = [ "out" "cdb" ];
-  nativeBuildInputs = [ nix-sys-generate redo-c cproto ];
+  outputs = [ "out" "cdb" "config" ];
+  nativeBuildInputs = [ nixsys-preprocess redo-c cproto ];
   buildInputs = [ tinycdb linuxHeaders ];
   configurePhase = ''
     mkdir conf
