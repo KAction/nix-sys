@@ -5,7 +5,7 @@ let
 in stdenv.mkDerivation {
   name = "nix-sys";
   src = ./.;
-  outputs = [ "out" "cdb" ];
+  outputs = [ "out" "cdb" "config" ];
   nativeBuildInputs = [ nixsys-preprocess redo-c cproto ];
   buildInputs = [ tinycdb linuxHeaders ];
   configurePhase = ''
