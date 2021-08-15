@@ -1,0 +1,13 @@
+#!@busybox@/bin/sh
+export PATH=@path@
+err()  { printf "%s %s\n" $'[\e[31m*\e[m]' "$*" $'\e[m'; }
+warn() { printf "%s %s\n" $'[\e[33m*\e[m]' "$*" $'\e[m'; }
+info() { printf "%s %s\n" $'[\e[32m*\e[m]' "$*" $'\e[m'; }
+
+if ! mount -o remount,rw / ; then
+       err "Failed to remount root partition read-write. Recovery shell."
+       exec sh
+fi
+
+ip link set up dev lo
+exec runsvdir -P /service .....................................................

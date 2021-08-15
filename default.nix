@@ -10,4 +10,5 @@ rec {
     inherit (pkgs.pkgsStatic) stdenv;
     inherit nixsys-preprocess;
   };
+  os = pkgs.callPackage ./os { inherit nixsys; };
 }
