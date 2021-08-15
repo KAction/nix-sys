@@ -4,8 +4,9 @@
 }:
 
 rec {
+  nixsys = nix-sys;
   nixsys-preprocess = pkgs.callPackage ./preprocess/package.nix { };
-  nixsys = pkgs.callPackage ./nix-sys {
+  nix-sys = pkgs.callPackage ./nix-sys {
     inherit (pkgs.pkgsStatic) stdenv;
     inherit nixsys-preprocess;
   };
