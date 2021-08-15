@@ -43,7 +43,8 @@ let
         path = service {
           name = "getty-tty1";
           runscript = ''
-            ${pkgs.busybox}/bin/getty -i 0 /dev/tty1
+            ${pkgs.busybox}/bin/getty
+              -l ${pkgs.busybox}/bin/login -i 0 /dev/tty1
           '';
         };
       };
