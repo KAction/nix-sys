@@ -98,7 +98,7 @@ main = do
       spec1 = spec0 {symlink = addInstallCDB (symlink spec0)}
 
   let template = $(compileMustacheFile "./data/config.h.mustache")
-      Object m0 = specToContext spec1 "foo"
+      Object m0 = specToContext spec1 hash
       value1 =
         Object
           . HashMap.insert "install_cdb" (String installCDB')

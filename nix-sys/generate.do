@@ -8,4 +8,5 @@ exec nixsys-preprocess            \
       --output-config config.h    \
       --install-cdb "$cdb"        \
       --output-cdb index.cdb      \
+      --hash "$hash"              \
       < conf/manifest
