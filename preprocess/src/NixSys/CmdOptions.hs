@@ -17,6 +17,7 @@ import Options.Applicative
     value,
     (<**>),
   )
+import Data.Text (Text)
 
 data CmdOptions = CmdOptions
   { -- It would be much simpler to just read from stdin, but ghci does not
@@ -28,7 +29,8 @@ data CmdOptions = CmdOptions
     -- Path where database will be finally installed (probably $cdb output)
     installCDB :: FilePath,
     -- Path to write constant database.
-    outputCDB :: FilePath
+    outputCDB :: FilePath,
+    hash :: Text
   }
 
 cmdOptions :: Parser CmdOptions
@@ -60,6 +62,8 @@ cmdOptions =
           <> value "out.cdb"
           <> showDefault
       )
+    <*> strOption
+      ( long "hash" <> help "hash of nix-sys output path")
 
 ioCmdOptions :: IO CmdOptions
 ioCmdOptions = execParser opts
