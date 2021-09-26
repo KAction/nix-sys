@@ -6,11 +6,12 @@ let
 in stdenv.mkDerivation {
   name = "nix-sys";
   src = ./.;
-  outputs = [ "out" "cdb" "config" ];
+  outputs = [ "out" "config" ];
   nativeBuildInputs = [ nixsys-preprocess redo-c cproto ];
   buildInputs = [ tinycdb linuxHeaders ];
   configurePhase = ''
     mkdir conf
+    export cdb=$out/nix-sys.cdb
     echo $out > conf/out
     echo $cdb > conf/cdb
     cp "$manifest" conf/manifest
