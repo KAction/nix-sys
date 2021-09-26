@@ -37,6 +37,10 @@ let
         path = callPackage ./path/v2/libexec/init { };
         mode = "555";
       };
+      "/boot/kernel" = {
+        path = callPackage ./linux { };
+        mode = "444";
+      };
     };
     symlink = {
       "/service/getty-tty1" = {
