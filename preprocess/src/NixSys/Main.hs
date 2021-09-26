@@ -119,6 +119,5 @@ main = do
           map (TEnc.encodeUtf8 . coerce . path . snd) $
             Map.toList (symlink spec1)
     addBS "#gc" $ BS.intercalate "\0" gcref
-    addBS "#hash" $ TEnc.encodeUtf8 hash <> "\0"
 
   pure ()
