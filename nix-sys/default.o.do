@@ -10,4 +10,4 @@ else
 fi
 
 redo-ifchange "$src"
-$cc "$src" -c -o $3
+$cc -D ENV_OUT=\"out=${out:-}\" "$src" -c -o $3
