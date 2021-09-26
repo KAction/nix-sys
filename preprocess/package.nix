@@ -1,4 +1,4 @@
-{ lib, haskell, version ? "8104" }:
+{ lib, haskell, version ? "8107" }:
 
 let
   reckless = drv: with haskell.lib; unmarkBroken (dontCheck (doJailbreak drv));
