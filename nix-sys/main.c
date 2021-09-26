@@ -296,8 +296,8 @@ int main(int argc, char **argv)
 	struct cdb ix_new, ix_old;
 	unsigned int iter;
 	const char *const exec_argv[] = { exec, NULL };
-	/* exec script is deliberately run in empty environment. */
-	const char *const exec_envp[] = { NULL };
+	/* exec script is run in controlled environment. */
+	const char *const exec_envp[] = { ENV_OUT, NULL };
 	
 
 	write2("opening index of new generation... ");
