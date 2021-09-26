@@ -133,7 +133,7 @@ let
           cat << EOF > /boot/kernel/conf/$now/lilo.conf
         image = /boot/kernel/conf/$now/image
           label  = "$label"
-          append = "init=/v2/libexec/init"
+          append = "init=/v2/libexec/init nix-sys=$out"
           read-only
         EOF
 
