@@ -145,6 +145,7 @@ let
           append = "init=${init-stage1} nix-sys=$out"
           read-only
         EOF
+        fi
 
         # Regenerate /boot/lilo.conf
           cat << EOF > /boot/lilo.conf~
@@ -170,9 +171,12 @@ let
           read-only
         EOF
 
-         mv /boot/lilo.conf~ /boot/lilo.conf
-         lilo -C /boot/lilo.conf
+        if ! cmp -s /boot/lilo.conf /boot/lilo.conf~ ; then
+          mv /boot/lilo.conf~ /boot/lilo.conf
+          lilo -C /boot/lilo.conf
         fi
+        rm -f /boot/lilo.conf~
+
         echo $out > /boot/current
         if [ $$ = 1 ] ; then
           exec ${init-stage2}
