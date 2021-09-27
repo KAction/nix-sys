@@ -1,0 +1,5 @@
+#!@busybox@/bin/sh
+export PATH=@path@
+
+ip link set up dev lo
+exec runsvdir -P /service .....................................................

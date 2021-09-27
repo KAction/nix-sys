@@ -1,7 +1,22 @@
-{ nixsys, writeText, runCommand, callPackage, pkgs }:
+{ nixsys, substituteAll, writeText, runCommand, callPackage, pkgs }:
 let
   kernel = callPackage ./linux { };
   kernel-sha256 = builtins.substring 11 32 kernel;
+  init-stage1 = let path = with pkgs; lib.makeBinPath [ busybox ];
+  in substituteAll {
+    src = ./init/init-stage1;
+    isExecutable = true;
+    inherit path;
+    inherit (pkgs) busybox;
+  };
+  init-stage2 = let path = with pkgs; lib.makeBinPath [ busybox runit ];
+  in substituteAll {
+    src = ./init/init-stage2;
+    isExecutable = true;
+    inherit path;
+    inherit (pkgs) busybox;
+  };
+
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
@@ -34,12 +49,6 @@ let
       inherit (pkgs) execline;
     };
   manifest = {
-    copy = {
-      "/v2/libexec/init" = {
-        path = callPackage ./path/v2/libexec/init { };
-        mode = "555";
-      };
-    };
     symlink = {
       "/service/getty-tty1" = {
         path = service {
@@ -133,7 +142,7 @@ let
           cat << EOF > /boot/kernel/conf/$now/lilo.conf
         image = /boot/kernel/conf/$now/image
           label  = "$label"
-          append = "init=/v2/libexec/init nix-sys=$out"
+          append = "init=${init-stage1} nix-sys=$out"
           read-only
         EOF
 
@@ -163,6 +172,10 @@ let
 
          mv /boot/lilo.conf~ /boot/lilo.conf
          lilo -C /boot/lilo.conf
+        fi
+        echo $out > /boot/current
+        if [ $$ = 1 ] ; then
+          exec ${init-stage2}
         fi
       '');
   };
