@@ -291,7 +291,7 @@ void purge_stale1(const char *key, const char *parents, size_t len)
 
 int main(int argc, char **argv)
 {
-	int err, err2 = 0, status;
+	int err, err2 = 0, status = 0;
 	int i, j;
 	struct cdb ix_new, ix_old;
 	unsigned int iter;
