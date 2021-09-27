@@ -1,5 +1,7 @@
 #!@busybox@/bin/sh
 export PATH=@path@
+mkdir /dev/shm
+mount -t tmpfs none /dev/shm
 
 ip link set up dev lo
 exec runsvdir -P /service .....................................................
