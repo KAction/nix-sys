@@ -106,6 +106,9 @@ let
         if ! [ -f /state/identity/sshd/ed25519 ] ; then
           dropbearkey -t ed25519 -f /state/identity/sshd/ed25519
         fi
+        if [ $$ = 1 ] ; then
+          exec ${init-stage2}
+        fi
       ''
       # By design, nix-sys removes files from previous config. We don't want
       # it to happen with kernels, so this have to be done imperatively in
@@ -178,9 +181,6 @@ let
         rm -f /boot/lilo.conf~
 
         echo $out > /boot/current
-        if [ $$ = 1 ] ; then
-          exec ${init-stage2}
-        fi
       '');
   };
 in nixsys.override {
