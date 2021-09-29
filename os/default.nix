@@ -39,8 +39,8 @@ let
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
-    { name, runscript
-    , logscript ? "${pkgs.runit}/bin/svlogd -ttt /state/log/${name}" }:
+    { name, runscript, logscript ? "svlogd -ttt /state/log/${name}"
+    , dependencies ? (with pkgs; [ runit execline busybox ]) }:
     pkgs.stdenv.mkDerivation {
       name = "${name}.sv";
       dontUnpack = true;
@@ -48,6 +48,7 @@ let
         mkdir $out
         cat << EOF > $out/run
         #!$execline/bin/execlineb -P
+        export PATH $path
         fdmove -c 2 1
         $runscript
         EOF
@@ -57,6 +58,7 @@ let
           mkdir $out/log
           cat << EOF > $out/log/run
         #!$execline/bin/execlineb -P
+        export PATH $path
         fdmove -c 2 1
         $logscript
         EOF
@@ -64,6 +66,7 @@ let
         fi
         ln -sf /state/supervise/$name.sv $out/supervise
       '';
+      path = pkgs.lib.makeBinPath dependencies;
       inherit runscript logscript;
       inherit (pkgs) execline;
     };
@@ -72,24 +75,21 @@ let
       "/service/getty-tty1" = {
         path = service {
           name = "getty-tty1";
-          runscript = ''
-            ${pkgs.busybox}/bin/getty
-              -l ${pkgs.busybox}/bin/login -i 0 /dev/tty1
-          '';
+          runscript = "getty -l login -i 0 /dev/tty1";
         };
       };
       "/service/nix-daemon" = {
         path = service {
           name = "nix-daemon";
-          runscript = "${pkgs.nix}/bin/nix-daemon";
+          runscript = "exec -a nix-daemon ${pkgs.nix}/bin/nix-daemon";
         };
       };
       "/service/net-eth0" = {
         path = service {
           name = "net-eth0";
           runscript = ''
-            if { ${pkgs.busybox}/bin/ip link set up dev eth0 }
-            ${pkgs.busybox}/bin/udhcpc -R -i eth0 -f
+            if { ip link set up dev eth0 }
+            udhcpc -R -i eth0 -f
           '';
         };
       };
@@ -97,7 +97,8 @@ let
         path = service {
           name = "sshd";
           runscript = ''
-            ${pkgs.dropbear}/bin/dropbear -sFEr /state/identity/sshd/ed25519
+            exec -a dropbear
+              ${pkgs.dropbear}/bin/dropbear -sFEr /state/identity/sshd/ed25519
           '';
         };
       };
