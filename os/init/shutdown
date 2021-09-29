@@ -1,0 +1,7 @@
+#!@busybox@/bin/sh
+export PATH=@path@
+sv force-exit /service/*
+sync
+umount /dev/sda1
+mount -o remount,ro /
+@name@ -f

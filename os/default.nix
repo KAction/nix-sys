@@ -16,6 +16,25 @@ let
     inherit path;
     inherit (pkgs) busybox;
   };
+  shutdown = action:
+    substituteAll {
+      name = action;
+      src = ./init/shutdown;
+      isExecutable = true;
+      path = with pkgs; lib.makeBinPath [ busybox runit ];
+      inherit (pkgs) busybox;
+    };
+  reboot = shutdown "reboot";
+  poweroff = shutdown "poweroff";
+
+  sinit = callPackage ./sinit {
+    inherit (pkgs.pkgsStatic) stdenv;
+    config-file = pkgs.writeText "config.h" ''
+      static char *const rcinitcmd[]     = { "${init-stage2}", NULL };
+      static char *const rcrebootcmd[]   = { "${reboot}", NULL };
+      static char *const rcpoweroffcmd[] = { "${poweroff}", NULL };
+    '';
+  };
 
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
@@ -95,7 +114,8 @@ let
       "/state/identity/sshd" = { mode = "700"; };
     };
     exec = let
-      path = with pkgs; lib.makeBinPath [ nix tinycdb busybox dropbear lilo ];
+      path = with pkgs;
+        lib.makeBinPath [ sinit nix tinycdb busybox dropbear lilo ];
     in pkgs.writeScript "post-install" (
       # ssh server key can't be generated at build time, or it will be the same
       # at all targets
@@ -106,8 +126,9 @@ let
         if ! [ -f /state/identity/sshd/ed25519 ] ; then
           dropbearkey -t ed25519 -f /state/identity/sshd/ed25519
         fi
+        # busybox sh does not support "-a" option of "exec" builtin.
         if [ $$ = 1 ] ; then
-          exec ${init-stage2}
+          exec sinit
         fi
       ''
       # By design, nix-sys removes files from previous config. We don't want
