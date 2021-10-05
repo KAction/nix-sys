@@ -10,5 +10,7 @@ rec {
     inherit (pkgs.pkgsStatic) stdenv;
     inherit nixsys-preprocess;
   };
-  os = pkgs.callPackage ./os { inherit nixsys; };
+  pending = { tinyssh = pkgs.callPackage ./pending/tinyssh { }; };
+
+  os = pkgs.callPackage ./os { inherit nixsys pending; };
 }

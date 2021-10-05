@@ -1,4 +1,4 @@
-{ nixsys, substituteAll, writeText, runCommand, callPackage, pkgs }:
+{ nixsys, pending, substituteAll, writeText, runCommand, callPackage, pkgs }:
 let
   kernel = callPackage ./linux { };
   kernel-sha256 = builtins.substring 11 32 kernel;
@@ -93,6 +93,16 @@ let
           '';
         };
       };
+      "/service/tinyssh" = {
+        path = service {
+          name = "tinyssh";
+          runscript = ''
+            busybox tcpsvd 0 23 tinysshd -v /state/identity/tinyssh
+          '';
+          dependencies = with pkgs; [ busybox execline pending.tinyssh ];
+        };
+      };
+
       "/service/sshd" = {
         path = service {
           name = "sshd";
@@ -109,6 +119,7 @@ let
       "/boot/kernel/conf" = { mode = "755"; };
       "/state/supervise" = { mode = "700"; };
       "/state/log/sshd" = { mode = "700"; };
+      "/state/log/tinyssh" = { mode = "700"; };
       "/state/log/net-eth0" = { mode = "700"; };
       "/state/log/nix-daemon" = { mode = "700"; };
       "/state/log/getty-tty1" = { mode = "700"; };
@@ -116,7 +127,15 @@ let
     };
     exec = let
       path = with pkgs;
-        lib.makeBinPath [ sinit nix tinycdb busybox dropbear lilo ];
+        lib.makeBinPath [
+          sinit
+          nix
+          tinycdb
+          busybox
+          pending.tinyssh
+          dropbear
+          lilo
+        ];
     in pkgs.writeScript "post-install" (
       # ssh server key can't be generated at build time, or it will be the same
       # at all targets
@@ -127,6 +146,10 @@ let
         if ! [ -f /state/identity/sshd/ed25519 ] ; then
           dropbearkey -t ed25519 -f /state/identity/sshd/ed25519
         fi
+        if ! [ -f /state/identity/tinyssh/ed25519.pk ] ; then
+          tinysshd-makekey /state/identity/tinyssh
+        fi
+
         # busybox sh does not support "-a" option of "exec" builtin.
         if [ $$ = 1 ] ; then
           exec sinit
