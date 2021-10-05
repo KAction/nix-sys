@@ -93,23 +93,13 @@ let
           '';
         };
       };
-      "/service/tinyssh" = {
-        path = service {
-          name = "tinyssh";
-          runscript = ''
-            busybox tcpsvd 0 23 tinysshd -v /state/identity/tinyssh
-          '';
-          dependencies = with pkgs; [ busybox execline pending.tinyssh ];
-        };
-      };
-
       "/service/sshd" = {
         path = service {
           name = "sshd";
           runscript = ''
-            exec -a dropbear
-              ${pkgs.dropbear}/bin/dropbear -sFEr /state/identity/sshd/ed25519
+            busybox tcpsvd 0 22 tinysshd -v /state/identity/tinyssh
           '';
+          dependencies = with pkgs; [ busybox execline pending.tinyssh ];
         };
       };
     };
@@ -123,7 +113,6 @@ let
       "/state/log/net-eth0" = { mode = "700"; };
       "/state/log/nix-daemon" = { mode = "700"; };
       "/state/log/getty-tty1" = { mode = "700"; };
-      "/state/identity/sshd" = { mode = "700"; };
     };
     exec = let
       path = with pkgs;
@@ -143,9 +132,6 @@ let
         #!${pkgs.busybox}/bin/sh -eu
         umask 022
         export PATH=${path}
-        if ! [ -f /state/identity/sshd/ed25519 ] ; then
-          dropbearkey -t ed25519 -f /state/identity/sshd/ed25519
-        fi
         if ! [ -f /state/identity/tinyssh/ed25519.pk ] ; then
           tinysshd-makekey /state/identity/tinyssh
         fi
