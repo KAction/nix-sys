@@ -35,6 +35,7 @@ let
       static char *const rcpoweroffcmd[] = { "${poweroff}", NULL };
     '';
   };
+  mount = callPackage ./mount { inherit sinit; };
 
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
@@ -134,6 +135,18 @@ let
         export PATH=${path}
         if ! [ -f /state/identity/tinyssh/ed25519.pk ] ; then
           tinysshd-makekey /state/identity/tinyssh
+        fi
+
+        # mount fails with remount option is mount point does not
+        # something already mounted on it; we need this option if there
+        # is something already there to make sure we don't build huge
+        # stack of mounts and umount whatever was there before.
+        if ! mount -o ro,bind,remount ${mount.bin} /bin 2>/dev/null ; then
+          mount -o ro,bind ${mount.bin} /bin
+        fi
+
+        if ! mount -o ro,bind,remount ${mount.usr} /usr 2>/dev/null ; then
+          mount -o ro,bind ${mount.usr} /usr
         fi
 
         # busybox sh does not support "-a" option of "exec" builtin.
