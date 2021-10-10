@@ -28,15 +28,15 @@ let
   etc = runCommand "mount-etc" { } ''
     mkdir -p $out/ssl/certs
 
-    ln -sf ${hosts}          $out/hosts
-    ln -sf ${resolv}         $out/resolv.conf
-    ln -sf ${passwd}/passwd  $out/passwd
-    ln -sf ${passwd}/group   $out/group
+    cp ${hosts}          $out/hosts
+    cp ${resolv}         $out/resolv.conf
+    cp ${passwd}/passwd  $out/passwd
+    cp ${passwd}/group   $out/group
 
-    ln -sf ${iana-etc}/etc/protocols $out/protocols
-    ln -sf ${iana-etc}/etc/services  $out/services
+    cp ${iana-etc}/etc/protocols $out/protocols
+    cp ${iana-etc}/etc/services  $out/services
 
-    ln -sf ${cacert}/etc/ssl/certs/ca-bundle.crt $out/ssl/certs/ca-certificates.crt
+    cp ${cacert}/etc/ssl/certs/ca-bundle.crt $out/ssl/certs/ca-certificates.crt
   '';
 
 in {
