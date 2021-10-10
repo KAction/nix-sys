@@ -28,7 +28,7 @@ let
   etc = runCommand "mount-etc" { } ''
     mkdir -p $out/ssl/certs
 
-    cp ${hosts}          $out/hosts
+    zcat ${hosts} > $out/hosts
     cp ${resolv}         $out/resolv.conf
     cp ${passwd}/passwd  $out/passwd
     cp ${passwd}/group   $out/group
