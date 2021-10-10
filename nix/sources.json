@@ -1,4 +1,11 @@
 {
+    "mk-passwd": {
+        "sha256": "1bgjq8j69wbdjz9pd3apijkhk64wdvma4lzkjkmhwvp69ny4gbxl",
+        "type": "tarball",
+        "url": "https://git.sr.ht/~kaction/mk-passwd/archive/mk-passwd/0.2.2.tar.gz",
+        "url_template": "https://git.sr.ht/~kaction/mk-passwd/archive/mk-passwd/<version>.tar.gz",
+        "version": "0.2.2"
+    },
     "niv": {
         "branch": "master",
         "description": "Easy dependency management for Nix projects",

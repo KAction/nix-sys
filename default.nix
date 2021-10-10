@@ -4,6 +4,7 @@
 }:
 
 rec {
+  mk-passwd = import "${sources.mk-passwd}/${sources.mk-passwd.version}" { };
   nixsys = nix-sys;
   nixsys-preprocess = pkgs.callPackage ./preprocess/package.nix { };
   nix-sys = pkgs.callPackage ./nix-sys {
@@ -12,5 +13,5 @@ rec {
   };
   pending = { tinyssh = pkgs.callPackage ./pending/tinyssh { }; };
 
-  os = pkgs.callPackage ./os { inherit nixsys pending; };
+  os = pkgs.callPackage ./os { inherit nixsys pending mk-passwd; };
 }

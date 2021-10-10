@@ -1,0 +1,33 @@
+{
+  "groups": [
+    {
+      "name": "nixbld",
+      "users": [
+        "nixbld1",
+        "nixbld2",
+        "nixbld3"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "name": "user",
+      "shell": "/bin/sh",
+      "home": "/home/user",
+      "uid": 1000,
+      "gid": 1000
+    },
+    {
+      "name": "nixbld1",
+      "gid": "nixbld"
+    },
+    {
+      "name": "nixbld2",
+      "gid": "nixbld"
+    },
+    {
+      "name": "nixbld3",
+      "gid": "nixbld"
+    }
+  ]
+}

@@ -1,4 +1,5 @@
-{ nixsys, pending, substituteAll, writeText, runCommand, callPackage, pkgs }:
+{ nixsys, mk-passwd, pending, substituteAll, writeText, runCommand, callPackage
+, pkgs }:
 let
   kernel = callPackage ./linux { };
   kernel-sha256 = builtins.substring 11 32 kernel;
@@ -35,7 +36,7 @@ let
       static char *const rcpoweroffcmd[] = { "${poweroff}", NULL };
     '';
   };
-  mount = callPackage ./mount { inherit sinit; };
+  mount = callPackage ./mount { inherit mk-passwd sinit; };
 
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
@@ -147,6 +148,10 @@ let
 
         if ! mount -o ro,bind,remount ${mount.usr} /usr 2>/dev/null ; then
           mount -o ro,bind ${mount.usr} /usr
+        fi
+
+        if ! mount -o ro,bind,remount ${mount.etc} /etc 2>/dev/null ; then
+          mount -o ro,bind ${mount.etc} /etc
         fi
 
         # busybox sh does not support "-a" option of "exec" builtin.
