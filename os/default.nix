@@ -41,7 +41,7 @@ let
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
-    { name, runscript, logscript ? "svlogd -ttt /state/log/${name}"
+    { name, runscript, logscript ? "svlogd -ttt /state/log/${name}.1"
     , dependencies ? (with pkgs; [ runit execline busybox ]) }:
     pkgs.stdenv.mkDerivation {
       name = "${name}.sv";
@@ -65,8 +65,9 @@ let
         $logscript
         EOF
           chmod +x $out/log/run
+          ln -sf /state/supervise/log.$name $out/log/supervise
         fi
-        ln -sf /state/supervise/$name.sv $out/supervise
+        ln -sf /state/supervise/$name $out/supervise
       '';
       path = pkgs.lib.makeBinPath dependencies;
       inherit runscript logscript;
@@ -110,11 +111,11 @@ let
       "/boot/kernel/hash" = { mode = "755"; };
       "/boot/kernel/conf" = { mode = "755"; };
       "/state/supervise" = { mode = "700"; };
-      "/state/log/sshd" = { mode = "700"; };
-      "/state/log/tinyssh" = { mode = "700"; };
-      "/state/log/net-eth0" = { mode = "700"; };
-      "/state/log/nix-daemon" = { mode = "700"; };
-      "/state/log/getty-tty1" = { mode = "700"; };
+      "/state/log/sshd.1" = { mode = "700"; };
+      "/state/log/tinyssh.1" = { mode = "700"; };
+      "/state/log/net-eth0.1" = { mode = "700"; };
+      "/state/log/nix-daemon.1" = { mode = "700"; };
+      "/state/log/getty-tty1.1" = { mode = "700"; };
     };
     exec = let
       path = with pkgs;
