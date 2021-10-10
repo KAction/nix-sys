@@ -138,22 +138,25 @@ let
         if ! [ -f /state/identity/tinyssh/ed25519.pk ] ; then
           tinysshd-makekey /state/identity/tinyssh
         fi
+      ''
+      # mount fails with remount option is mount point does not
+      # something already mounted on it; we need this option if there
+      # is something already there to make sure we don't build huge
+      # stack of mounts and umount whatever was there before.
+      #
+      # Also, to make bind-mount read-only, two calls to mount(2) are
+      # necessary.
+      + ''
+        bindmount() {
+          if ! mount -o bind,remount "$1" "$2" 2>/dev/null ; then
+            mount -o bind "$1" "$2"
+          fi
+          mount -o ro,bind,remount "$2"
+        }
 
-        # mount fails with remount option is mount point does not
-        # something already mounted on it; we need this option if there
-        # is something already there to make sure we don't build huge
-        # stack of mounts and umount whatever was there before.
-        if ! mount -o ro,bind,remount ${mount.bin} /bin 2>/dev/null ; then
-          mount -o ro,bind ${mount.bin} /bin
-        fi
-
-        if ! mount -o ro,bind,remount ${mount.usr} /usr 2>/dev/null ; then
-          mount -o ro,bind ${mount.usr} /usr
-        fi
-
-        if ! mount -o ro,bind,remount ${mount.etc} /etc 2>/dev/null ; then
-          mount -o ro,bind ${mount.etc} /etc
-        fi
+        bindmount "${mount.bin}" /bin
+        bindmount "${mount.usr}" /usr
+        bindmount "${mount.etc}" /etc
 
         # busybox sh does not support "-a" option of "exec" builtin.
         if [ $$ = 1 ] ; then
