@@ -1,5 +1,5 @@
 { busybox, mk-passwd, writeText, nixFlakes, sinit, dropbear, buildEnv
-, runCommand, cacert }:
+, runCommand, cacert, iana-etc }:
 let
   bin = runCommand "mount-bin" { inherit busybox; } ''
     mkdir -p $out
@@ -32,6 +32,9 @@ let
     ln -sf ${resolv}         $out/resolv.conf
     ln -sf ${passwd}/passwd  $out/passwd
     ln -sf ${passwd}/group   $out/group
+
+    ln -sf ${iana-etc}/etc/protocols $out/protocols
+    ln -sf ${iana-etc}/etc/services  $out/services
 
     ln -sf ${cacert}/etc/ssl/certs/ca-bundle.crt $out/ssl/certs/ca-certificates.crt
   '';
