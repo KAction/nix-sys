@@ -1,0 +1,23 @@
+format ELF64 executable
+include "arch/x86_64-linux.fasm"
+
+upstream:
+db '@binary@', 0
+
+entry $
+	mov r10, [rsp]     ;; r10 := argc
+
+	mov qword rdi, upstream     ;; rdi := upstream
+	lea rsi, [rsp + 8]          ;; rsi := argv
+	mov qword [rsi], upstream   ;; argv[0] := upstream. Makes busybox happy
+
+	lea rdx, [16 + 8 * r10 + rsp] ;; rdx := envp
+	mov rax, SYS_execve
+	syscall
+
+	;; This should not happen, but segfaulting if execve(2) failed is not
+	;; nice.
+	neg rax
+	mov rdi, rax
+	mov rax, SYS_exit
+	syscall

@@ -37,6 +37,7 @@ let
     cp ${iana-etc}/etc/services  $out/services
 
     cp ${cacert}/etc/ssl/certs/ca-bundle.crt $out/ssl/certs/ca-certificates.crt
+    echo 'permit nopass keepenv user' > $out/doas.conf
   '';
 
 in {

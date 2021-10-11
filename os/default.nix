@@ -2,6 +2,8 @@
 , pkgs }:
 let
   kernel = callPackage ./linux { };
+  doas = pkgs.doas.override { withPAM = false; };
+  cwrap = binary: callPackage ./cwrap { inherit binary; };
   kernel-sha256 = builtins.substring 11 32 kernel;
   init-stage1 = let path = with pkgs; lib.makeBinPath [ busybox ];
   in substituteAll {
@@ -74,6 +76,12 @@ let
       inherit (pkgs) execline;
     };
   manifest = {
+    copy = {
+      "/suid/doas" = {
+        path = cwrap "${doas}/bin/doas";
+        mode = "04555";
+      };
+    };
     symlink = {
       "/service/getty-tty1" = {
         path = service {
