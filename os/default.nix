@@ -4,6 +4,7 @@ let
   cwrap = binary: callPackage ./cwrap { inherit binary; };
 
   manifest.doas = callPackage ./suid/doas { inherit cwrap; };
+  manifest.etc = callPackage ./mount/etc { inherit mk-passwd; };
 
   kernel = callPackage ./linux { };
   kernel-sha256 = builtins.substring 11 32 kernel;
@@ -40,7 +41,7 @@ let
       static char *const rcpoweroffcmd[] = { "${poweroff}", NULL };
     '';
   };
-  mount = callPackage ./mount { inherit mk-passwd sinit; };
+  mount = callPackage ./mount { inherit sinit; };
 
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
@@ -161,7 +162,6 @@ let
 
           bindmount "${mount.bin}" /bin
           bindmount "${mount.usr}" /usr
-          bindmount "${mount.etc}" /etc
 
           # busybox sh does not support "-a" option of "exec" builtin.
           if [ $$ = 1 ] ; then
@@ -249,7 +249,7 @@ let
     buildInputs = [ pkgs.jq ];
     manifests = builtins.attrValues manifest;
     installPhase = ''
-      jq --slurp 'reduce .[] as $item ({}; . * $item)' > $out
+      jq --slurp 'reduce .[] as $item ({}; . * $item)' $manifests > $out
     '';
   };
 in nixsys.override { manifest = united; }
