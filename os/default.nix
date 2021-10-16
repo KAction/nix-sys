@@ -6,6 +6,10 @@ let
   manifest.doas = callPackage ./suid/doas { inherit cwrap; };
   manifest.etc = callPackage ./mount/etc { inherit mk-passwd; };
   manifest.bin = callPackage ./mount/bin { inherit cwrap; };
+  manifest.usr = callPackage ./mount/usr {
+    inherit sinit;
+    inherit (pending) tinyssh;
+  };
 
   kernel = callPackage ./linux { };
   kernel-sha256 = builtins.substring 11 32 kernel;
@@ -42,8 +46,6 @@ let
       static char *const rcpoweroffcmd[] = { "${poweroff}", NULL };
     '';
   };
-  mount = callPackage ./mount { inherit sinit; };
-
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
@@ -154,15 +156,6 @@ let
         # Also, to make bind-mount read-only, two calls to mount(2) are
         # necessary.
         + ''
-          bindmount() {
-            if ! mount -o bind,remount "$1" "$2" 2>/dev/null ; then
-              mount -o bind "$1" "$2"
-            fi
-            mount -o ro,bind,remount "$2"
-          }
-
-          bindmount "${mount.usr}" /usr
-
           # busybox sh does not support "-a" option of "exec" builtin.
           if [ $$ = 1 ] ; then
             exec sinit
