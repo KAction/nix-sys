@@ -5,6 +5,7 @@ let
 
   manifest.doas = callPackage ./suid/doas { inherit cwrap; };
   manifest.etc = callPackage ./mount/etc { inherit mk-passwd; };
+  manifest.bin = callPackage ./mount/bin { inherit cwrap; };
 
   kernel = callPackage ./linux { };
   kernel-sha256 = builtins.substring 11 32 kernel;
@@ -160,7 +161,6 @@ let
             mount -o ro,bind,remount "$2"
           }
 
-          bindmount "${mount.bin}" /bin
           bindmount "${mount.usr}" /usr
 
           # busybox sh does not support "-a" option of "exec" builtin.
