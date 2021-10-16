@@ -1,17 +1,26 @@
-{ stdenv, writeText, cacert, iana-etc, mk-passwd }:
+{ stdenv, writeScript, busybox, writeText, cacert, iana-etc, mk-passwd }:
 let
   dropbox = part: "https://www.dropbox.com/s/${part}?dl=1";
   text = writeText "source.txt";
+  usersh = writeScript "usersh" ''
+    #!${busybox}/bin/sh
+    test -t 0 || exec /bin/sh "$@"
+    test -x ~/bin/sh  && exec ~/bin/sh "$@"
+    exec /bin/sh
+  '';
 
   passwd = stdenv.mkDerivation {
     name = "passwd";
-    src = ../passwd.json;
+    src = ./passwd.json;
     outputs = [ "out" "passwd" "group" ];
     dontUnpack = true;
     buildInputs = [ mk-passwd ];
     installPhase = ''
-      mk-passwd < $src --json $out --passwd $passwd --group $group
+      substituteAll $src passwd.json
+      mk-passwd < passwd.json --json $out --passwd $passwd --group $group
     '';
+
+    inherit usersh;
   };
 
   hosts = stdenv.mkDerivation {

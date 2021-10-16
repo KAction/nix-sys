@@ -12,7 +12,7 @@
   "users": [
     {
       "name": "user",
-      "shell": "/bin/sh",
+      "shell": "@usersh@",
       "home": "/home/user",
       "uid": 1000,
       "gid": 1000
