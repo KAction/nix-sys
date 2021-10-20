@@ -148,6 +148,13 @@ let
             tinysshd-makekey /state/identity/tinyssh
           fi
         ''
+        # These symlinks are expected by number of software.
+        + ''
+          ln -sf /proc/self/fd /dev/fd
+          ln -sf /proc/self/fd/0 /dev/stdin
+          ln -sf /proc/self/fd/1 /dev/stdout
+          ln -sf /proc/self/fd/2 /dev/stderr
+        ''
         # mount fails with remount option is mount point does not
         # something already mounted on it; we need this option if there
         # is something already there to make sure we don't build huge
