@@ -14,5 +14,11 @@ stdenv.mkDerivation rec {
     echo /share/man > conf-man
   '';
   DESTDIR = placeholder "out";
-  meta = { maintainers = with lib.maintainers; [ kaction ]; };
+  meta = with lib; {
+    description = "minimalistic SSH server";
+    homepage = "https://tinyssh.org";
+    license = licenses.publicDomain;
+    platforms = platforms.unix;
+    maintainers = [ maintainers.kaction ];
+  };
 }
