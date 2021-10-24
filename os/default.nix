@@ -83,6 +83,14 @@ let
     };
   manifest.main = let
     m = {
+      copy = {
+        "/etc/nix/nix.conf" = {
+          path = writeText "nix.conf" ''
+            experimental-features = flakes nix-command
+          '';
+          mode = "0444";
+        };
+      };
       symlink = {
         "/service/getty-tty1" = {
           path = service {
