@@ -158,10 +158,10 @@ let
         ''
         # These symlinks are expected by number of software.
         + ''
-          ln -sf /proc/self/fd /dev/fd
-          ln -sf /proc/self/fd/0 /dev/stdin
-          ln -sf /proc/self/fd/1 /dev/stdout
-          ln -sf /proc/self/fd/2 /dev/stderr
+          ln -snf /proc/self/fd /dev/fd
+          ln -snf /proc/self/fd/0 /dev/stdin
+          ln -snf /proc/self/fd/1 /dev/stdout
+          ln -snf /proc/self/fd/2 /dev/stderr
         ''
         # mount fails with remount option is mount point does not
         # something already mounted on it; we need this option if there
