@@ -92,6 +92,10 @@ let
         };
       };
       symlink = {
+        "/dev/fd" = { path = "/proc/self/fd"; };
+        "/dev/stdin" = { path = "/proc/self/fd/0"; };
+        "/dev/stdout" = { path = "/proc/self/fd/1"; };
+        "/dev/stderr" = { path = "/proc/self/fd/2"; };
         "/service/getty-tty1" = {
           path = service {
             name = "getty-tty1";
@@ -155,13 +159,6 @@ let
           if ! [ -f /state/identity/tinyssh/ed25519.pk ] ; then
             tinysshd-makekey /state/identity/tinyssh
           fi
-        ''
-        # These symlinks are expected by number of software.
-        + ''
-          ln -snf /proc/self/fd /dev/fd
-          ln -snf /proc/self/fd/0 /dev/stdin
-          ln -snf /proc/self/fd/1 /dev/stdout
-          ln -snf /proc/self/fd/2 /dev/stderr
         ''
         # mount fails with remount option is mount point does not
         # something already mounted on it; we need this option if there
