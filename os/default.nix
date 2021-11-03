@@ -87,6 +87,13 @@ let
         "/etc/nix/nix.conf" = {
           path = writeText "nix.conf" ''
             experimental-features = flakes nix-command
+            trusted-users = user
+          '';
+          mode = "0444";
+        };
+        "/etc/sysctl.conf" = {
+          path = writeText "sysctl.conf" ''
+            fs.inotify.max_user_watches = 3200000
           '';
           mode = "0444";
         };
@@ -156,6 +163,7 @@ let
           #!${pkgs.busybox}/bin/sh -eu
           umask 022
           export PATH=${path}
+          sysctl -pw
           if ! [ -f /state/identity/tinyssh/ed25519.pk ] ; then
             tinysshd-makekey /state/identity/tinyssh
           fi
