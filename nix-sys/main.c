@@ -201,13 +201,15 @@ int xopen_cdb(struct cdb *cdbp, const char *filename, int missing_ok)
 int make_backup(struct cdb *cdbp, const char *target, const char *backup)
 {
 	int err;
+	int cdb_valid;
 
 	write2("checking if ");
 	write2_s(target);
 	write2(" needs backup... ");
 
+	cdb_valid = cdbp->cdb_fd >= 0;
 	/* In old generation, nothing to do. */
-	if (cdb_find(cdbp, target, strlen(target) + 1) == 1) {
+	if (cdb_valid && cdb_find(cdbp, target, strlen(target) + 1) == 1) {
 		write2("no\n");
 		return 0;
 	}
