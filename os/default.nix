@@ -235,16 +235,6 @@ let
               cat "$x" >> /boot/lilo.conf~
             done
 
-            cat << EOF >> /boot/lilo.conf~
-          image = /boot/bzImage-2
-            label = "Linux-2"
-            read-only
-
-          image = /boot/bzImage-1
-            label = "Linux-1"
-            read-only
-          EOF
-
           if ! cmp -s /boot/lilo.conf /boot/lilo.conf~ ; then
             mv /boot/lilo.conf~ /boot/lilo.conf
             lilo -C /boot/lilo.conf
