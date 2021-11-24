@@ -11,9 +11,15 @@
   ],
   "users": [
     {
+      "name": "root",
+      "shell": "/bin/sh",
+      "password": ""
+    },
+    {
       "name": "user",
       "shell": "@usersh@",
       "home": "/home/user",
+      "password": "",
       "uid": 1000,
       "gid": 1000
     },
