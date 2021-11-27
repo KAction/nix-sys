@@ -1,4 +1,5 @@
-{ stdenv, writeScript, busybox, writeText, cacert, iana-etc, mk-passwd }:
+{ runCommand, openssl, stdenv, writeScript, busybox, writeText, cacert, iana-etc
+, mk-passwd }:
 let
   dropbox = part: "https://www.dropbox.com/s/${part}?dl=1";
   text = writeText "source.txt";
@@ -8,6 +9,32 @@ let
     test -x ~/bin/sh  && exec ~/bin/sh "$@"
     exec /bin/sh
   '';
+
+  # This derivation generates self-signed certificate that will be added
+  # into the bundle of trusted certficates. It allows me to mitm all own
+  # connections without configuring every individual client.
+  #
+  # Derivation is deliberately non-deterministic, since I don't want
+  # anybody else to get certificate that would allow launching real attack.
+  # Non-deterministic certificates are considerer bad practices, clearly, but
+  # I think it is okay in this case.
+  #
+  # mitmproxy does not support ed25519 certificates.
+  mitm = stdenv.mkDerivation {
+    name = "mitm";
+    dontUnpack = true;
+    buildInputs = [ openssl ];
+    installPhase = ''
+      mkdir -p $out
+      openssl req -x509 -newkey rsa:2048  \
+        -keyout $out/$name.key            \
+        -out    $out/$name.crt            \
+        -sha256                           \
+        -nodes                            \
+        -subj '/CN=mitmproxy@kaction.cc/' \
+        -days 36500
+    '';
+  };
 
   passwd = stdenv.mkDerivation {
     name = "passwd";
@@ -37,6 +64,12 @@ let
 
   manifest = {
     copy = {
+      "/etc/mitm.pem" = {
+        path = runCommand "mitm.pem" { } ''
+          cat ${mitm}/mitm.crt ${mitm}/mitm.key > $out
+        '';
+        mode = "0444";
+      };
       "/etc/hosts" = {
         path = hosts;
         mode = "0444";
@@ -46,7 +79,10 @@ let
         mode = "0444";
       };
       "/etc/ssl/certs/ca-certificates.crt" = {
-        path = "${cacert}/etc/ssl/certs/ca-bundle.crt";
+        path = runCommand "ca-certificates.crt" { } ''
+          cat ${cacert}/etc/ssl/certs/ca-bundle.crt \
+              ${mitm}/mitm.crt > $out
+        '';
         mode = "0444";
       };
       "/etc/protocols" = {
