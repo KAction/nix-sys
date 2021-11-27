@@ -1,5 +1,5 @@
 { nixsys, stdenv, mk-passwd, pending, substituteAll, writeText, runCommand
-, callPackage, pkgs }:
+, callPackage, syslinux, pkgs }:
 let
   cwrap = binary: callPackage ./cwrap { inherit binary; };
 
@@ -12,7 +12,7 @@ let
   };
 
   kernel = callPackage ./linux { };
-  kernel-sha256 = builtins.substring 11 32 kernel;
+  setup-bootloader = callPackage ./setup-bootloader { };
   init-stage1 = let path = with pkgs; lib.makeBinPath [ busybox ];
   in substituteAll {
     src = ./init/init-stage1;
@@ -149,100 +149,19 @@ let
         path = with pkgs;
           lib.makeBinPath [
             sinit
-            nix
-            tinycdb
             busybox
-            pending.tinyssh
-            dropbear
-            lilo
+            setup-bootloader
           ];
-      in pkgs.writeScript "post-install" (
-        # ssh server key can't be generated at build time, or it will be the same
-        # at all targets
-        ''
+      in pkgs.writeScript "post-install" ''
           #!${pkgs.busybox}/bin/sh -eu
           umask 022
           export PATH=${path}
           sysctl -pw
-          if ! [ -f /state/identity/tinyssh/ed25519.pk ] ; then
-            tinysshd-makekey /state/identity/tinyssh
-          fi
-        ''
-        # mount fails with remount option is mount point does not
-        # something already mounted on it; we need this option if there
-        # is something already there to make sure we don't build huge
-        # stack of mounts and umount whatever was there before.
-        #
-        # Also, to make bind-mount read-only, two calls to mount(2) are
-        # necessary.
-        + ''
-          # busybox sh does not support "-a" option of "exec" builtin.
           if [ $$ = 1 ] ; then
             exec sinit
           fi
-        ''
-        # By design, nix-sys removes files from previous config. We don't want
-        # it to happen with kernels, so this have to be done imperatively in
-        # post-install script.
-        + ''
-          epoch=`date +%s`
-          now=`date -d @$epoch +%Y-%m-%d.%s`
-        ''
-        # LILO has very small limit on length of label, so we barely can fit only
-        # timestamp, nothing more.
-        + ''
-          label=`date -d @$epoch +%Y%m%d%H%S`
-          if ! test -f /boot/kernel/hash/${kernel-sha256} ; then
-            cp ${kernel} /boot/kernel/hash/${kernel-sha256}
-          fi
-        ''
-        # Storing kernel by its hash (well, output hash) and hard-linking kernel
-        # afterward saves storage on /boot partition which is usually quite small
-        # (e.g Alpine linux dedicates merely 90Mb to it).
-        #
-        # Now, for every new invocation of nix-sys, we create new entry in
-        # bootloader, while taking care that two consequent calls to nix-sys
-        # (with same output hash) do not create duplicate entries.
-        + ''
-          current="none"
-          ! test -r /boot/current || current=`cat /boot/current`
-
-          if [ $out != $current ] ; then
-            this=`echo $out | cut -b12-43`
-            mkdir -p /boot/kernel/conf/$now
-            ln /boot/kernel/hash/${kernel-sha256} /boot/kernel/conf/$now/image
-            ln -sf $out /boot/kernel/conf/$now/nix-sys.gc
-            nix-store --add-root /boot/kernel/conf/$now/nix-sys.gc -r
-            cat << EOF > /boot/kernel/conf/$now/lilo.conf
-          image = /boot/kernel/conf/$now/image
-            label  = "$label"
-            append = "init=${init-stage1} nix-sys=$out"
-            read-only
-          EOF
-          fi
-
-          # Regenerate /boot/lilo.conf
-            cat << EOF > /boot/lilo.conf~
-          lba32
-          boot = /dev/sda
-          root = /dev/sda3
-          install = menu
-          prompt
-          timeout = 100
-          EOF
-
-            for x in `ls /boot/kernel/conf/*/lilo.conf | tac` ; do
-              cat "$x" >> /boot/lilo.conf~
-            done
-
-          if ! cmp -s /boot/lilo.conf /boot/lilo.conf~ ; then
-            mv /boot/lilo.conf~ /boot/lilo.conf
-            lilo -C /boot/lilo.conf
-          fi
-          rm -f /boot/lilo.conf~
-
-          echo $out > /boot/current
-        '');
+          setup-bootloader "$out" "${kernel}" "${init-stage1}"
+        '';
     };
   in writeText "manifest.json" (builtins.toJSON m);
 
