@@ -3,6 +3,7 @@
 let
   cwrap = binary: callPackage ./cwrap { inherit binary; };
 
+  manifest.hook-sysctl = callPackage ./hooks/sysctl { };
   manifest.doas = callPackage ./suid/doas { inherit cwrap; };
   manifest.etc = callPackage ./mount/etc { inherit mk-passwd; };
   manifest.bin = callPackage ./mount/bin { inherit cwrap; };
@@ -91,12 +92,6 @@ let
           '';
           mode = "0444";
         };
-        "/etc/sysctl.conf" = {
-          path = writeText "sysctl.conf" ''
-            fs.inotify.max_user_watches = 3200000
-          '';
-          mode = "0444";
-        };
       };
       symlink = {
         "/dev/fd" = { path = "/proc/self/fd"; };
@@ -156,7 +151,7 @@ let
           #!${pkgs.busybox}/bin/sh -eu
           umask 022
           export PATH=${path}
-          sysctl -pw
+          run-parts --exit-on-error /etc/hooks
           if [ $$ = 1 ] ; then
             exec sinit
           fi
