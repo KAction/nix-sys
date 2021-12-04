@@ -8,45 +8,13 @@ let
   manifest.etc = callPackage ./mount/etc { inherit mk-passwd; };
   manifest.bin = callPackage ./mount/bin { inherit cwrap; };
   manifest.usr = callPackage ./mount/usr {
-    inherit sinit;
+    inherit (init) sinit;
     inherit (pending) tinyssh;
   };
 
   kernel = callPackage ./linux { };
   setup-bootloader = callPackage ./setup-bootloader { };
-  init-stage1 = let path = with pkgs; lib.makeBinPath [ busybox ];
-  in substituteAll {
-    src = ./init/init-stage1;
-    isExecutable = true;
-    inherit path;
-    inherit (pkgs) busybox;
-  };
-  init-stage2 = let path = with pkgs; lib.makeBinPath [ busybox runit ];
-  in substituteAll {
-    src = ./init/init-stage2;
-    isExecutable = true;
-    inherit path;
-    inherit (pkgs) busybox;
-  };
-  shutdown = action:
-    substituteAll {
-      name = action;
-      src = ./init/shutdown;
-      isExecutable = true;
-      path = with pkgs; lib.makeBinPath [ busybox runit ];
-      inherit (pkgs) busybox;
-    };
-  reboot = shutdown "reboot";
-  poweroff = shutdown "poweroff";
-
-  sinit = callPackage ./sinit {
-    inherit (pkgs.pkgsStatic) stdenv;
-    config-file = pkgs.writeText "config.h" ''
-      static char *const rcinitcmd[]     = { "${init-stage2}", NULL };
-      static char *const rcrebootcmd[]   = { "${reboot}", NULL };
-      static char *const rcpoweroffcmd[] = { "${poweroff}", NULL };
-    '';
-  };
+  init = callPackage ./init { inherit (pkgs.pkgsStatic) stdenv; };
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
@@ -142,21 +110,17 @@ let
       };
       exec = let
         path = with pkgs;
-          lib.makeBinPath [
-            sinit
-            busybox
-            setup-bootloader
-          ];
+          lib.makeBinPath [ init.sinit busybox setup-bootloader ];
       in pkgs.writeScript "post-install" ''
-          #!${pkgs.busybox}/bin/sh -eu
-          umask 022
-          export PATH=${path}
-          run-parts --exit-on-error /etc/hooks
-          if [ $$ = 1 ] ; then
-            exec sinit
-          fi
-          setup-bootloader "$out" "${kernel}" "${init-stage1}"
-        '';
+        #!${pkgs.busybox}/bin/sh -eu
+        umask 022
+        export PATH=${path}
+        run-parts --exit-on-error /etc/hooks
+        if [ $$ = 1 ] ; then
+          exec sinit
+        fi
+        setup-bootloader "$out" "${kernel}" "${init.stage1}"
+      '';
     };
   in writeText "manifest.json" (builtins.toJSON m);
 
