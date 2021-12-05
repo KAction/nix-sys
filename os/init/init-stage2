@@ -2,6 +2,7 @@
 export PATH=@path@
 mkdir /dev/shm
 mount -t tmpfs none /dev/shm
+mount -t tmpfs none /state/supervise
 
 ip link set up dev lo
 exec runsvdir -P /service .....................................................
