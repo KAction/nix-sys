@@ -1,14 +1,14 @@
-{ lib, stdenv, fetchurl, ncurses, perl, openssl, flex, bison, libelf, bc }:
+{ lib, stdenv, fetchurl, ncurses, perl, openssl, flex, bison, elfutils, bc }:
 
 stdenv.mkDerivation rec {
   pname = "linux";
-  version = "5.4.149";
+  version = "5.15.7";
   src = fetchurl {
     url =
       "https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-${version}.tar.xz";
-    sha256 = "1s1zka0iay0drgkdnmzf587jbrg1gx13xv26k5r1qc7dik8xc6p7";
+    sha256 = "1caxpqmik6gkhk3437pcgfq6vvlbs962hylgbh64iizd76l5142x";
   };
-  nativeBuildInputs = [ ncurses perl openssl flex bison libelf bc ];
+  nativeBuildInputs = [ ncurses perl openssl flex bison elfutils bc ];
   configurePhase = ''
     # patchShebangs ./scripts/*
     # find ./scripts
