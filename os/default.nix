@@ -75,7 +75,10 @@ let
         "/service/nix-daemon" = {
           path = service {
             name = "nix-daemon";
-            runscript = "exec -a nix-daemon ${pkgs.nix}/bin/nix-daemon";
+            runscript = ''
+              export TMPDIR /dev/shm
+              exec -a nix-daemon ${pkgs.nix}/bin/nix-daemon
+            '';
           };
         };
         "/service/net-eth0" = {
