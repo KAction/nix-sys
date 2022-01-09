@@ -1,0 +1,12 @@
+format ELF64 executable
+include "arch/x86_64-linux.fasm"
+include ".config"
+
+entry $
+	mov eax, SYS_kill
+	mov rdi, 1
+	mov rsi, CONFIG_SIGNAL
+	syscall
+	mov rdi, rax
+	mov rax, SYS_exit
+	syscall
