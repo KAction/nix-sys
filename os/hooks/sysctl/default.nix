@@ -10,6 +10,7 @@ let
   m.copy."/etc/sysctl.conf" = {
     path = writeText "sysctl.conf" ''
       fs.inotify.max_user_watches = 3200000
+      net.ipv4.ip_unprivileged_port_start = 0
     '';
     mode = "0444";
   };
