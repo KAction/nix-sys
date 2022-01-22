@@ -50,18 +50,6 @@ let
     inherit usersh;
   };
 
-  hosts = stdenv.mkDerivation {
-    name = "hosts.txt";
-    src = builtins.fetchurl {
-      url = dropbox "5ijevtagpidy2et/hosts-2020-12-13.gz";
-      sha256 = "0k7k09gai1w107mq5x20yld5cd0l1xk2bw1cg2wxmn8mi4ga4rxa";
-    };
-    dontUnpack = true;
-    installPhase = ''
-      gzip -d < $src > $out
-    '';
-  };
-
   manifest = {
     copy = {
       "/etc/mitm.pem" = {
@@ -70,12 +58,8 @@ let
         '';
         mode = "0444";
       };
-      "/etc/hosts" = {
-        path = hosts;
-        mode = "0444";
-      };
       "/etc/resolv.conf" = {
-        path = text "nameserver 1.1.1.1";
+        path = text "nameserver 127.0.0.3";
         mode = "0444";
       };
       "/etc/ssl/certs/ca-certificates.crt" = {
