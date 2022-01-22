@@ -1,0 +1,93 @@
+Add support for serving static list of hosts
+
+This patch adds support of using constant database as source of information,
+that takes priority over normal DNS resolution process. It provides same
+functionality as conventional /etc/hosts, but in more efficient way.
+
+Last modified: 2022-01-22
+
+diff -U3 djbdns-1.05/Makefile ./djbdns-1.05-patched/Makefile
+--- djbdns-1.05/Makefile	2001-02-11 17:11:45.000000000 -0400
++++ ./djbdns-1.05-patched/Makefile	2022-01-18 01:08:33.307905478 -0400
+@@ -320,11 +320,11 @@
+ dnscache: \
+ load dnscache.o droproot.o okclient.o log.o cache.o query.o \
+ response.o dd.o roots.o iopause.o prot.o dns.a env.a alloc.a buffer.a \
+-libtai.a unix.a byte.a socket.lib
++libtai.a unix.a byte.a socket.lib cdb.a seek_set.o
+ 	./load dnscache droproot.o okclient.o log.o cache.o \
+ 	query.o response.o dd.o roots.o iopause.o prot.o dns.a \
+-	env.a alloc.a buffer.a libtai.a unix.a byte.a  `cat \
+-	socket.lib`
++	env.a alloc.a buffer.a libtai.a unix.a byte.a cdb.a \
++	seek_set.o `cat socket.lib`
+ 
+ dnscache-conf: \
+ load dnscache-conf.o generic-conf.o auto_home.o libtai.a buffer.a \
+diff -U3 djbdns-1.05/dnscache.c ./djbdns-1.05-patched/dnscache.c
+--- djbdns-1.05/dnscache.c	2001-02-11 17:11:45.000000000 -0400
++++ ./djbdns-1.05-patched/dnscache.c	2022-01-22 00:13:52.813166670 -0400
+@@ -22,6 +22,10 @@
+ #include "log.h"
+ #include "okclient.h"
+ #include "droproot.h"
++#include "cdb.h"
++#include "open.h"
++
++extern struct cdb hosts;
+ 
+ static int packetquery(char *buf,unsigned int len,char **q,char qtype[2],char qclass[2],char id[2])
+ {
+@@ -390,6 +394,7 @@
+ {
+   char *x;
+   unsigned long cachesize;
++  int hosts_fd;
+ 
+   x = env_get("IP");
+   if (!x)
+@@ -442,6 +447,11 @@
+   if (socket_listen(tcp53,20) == -1)
+     strerr_die2sys(111,FATAL,"unable to listen on TCP socket: ");
+ 
++  hosts_fd = open_read("hosts.cdb");
++  if (hosts_fd >= 0) {
++    cdb_init(&hosts, hosts_fd);
++  }
++
+   log_startup();
+   doit();
+ }
+diff -U3 djbdns-1.05/query.c ./djbdns-1.05-patched/query.c
+--- djbdns-1.05/query.c	2001-02-11 17:11:45.000000000 -0400
++++ ./djbdns-1.05-patched/query.c	2022-01-22 00:12:45.256164458 -0400
+@@ -1,3 +1,4 @@
++#include "cdb.h"
+ #include "error.h"
+ #include "roots.h"
+ #include "log.h"
+@@ -13,6 +14,8 @@
+ #include "response.h"
+ #include "query.h"
+ 
++struct cdb hosts = { .fd = -1 };
++
+ static int flagforwardonly = 0;
+ 
+ void query_forwardonly(void)
+@@ -116,6 +119,15 @@
+     byte_copy(ip,4,"\177\0\0\1");
+     return 1;
+   }
++
++  if (hosts.fd >= 0 && cdb_find(&hosts, d, dns_domain_length(d))) {
++    // If not, it means hosts.cdb is malformed.
++    if (cdb_datalen(&hosts) == 4) {
++      cdb_read(&hosts, ip, 4, cdb_datapos(&hosts));
++      return 1;
++    }
++  }
++
+   if (dd(d,"",ip) == 4) return 1;
+   return 0;
+ }

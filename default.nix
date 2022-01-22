@@ -1,6 +1,8 @@
 { sources ? import ./nix/sources.nix # set
 , nixpkgs ? sources.nixpkgs # path
-, pkgs ? import nixpkgs { } # set. only {pkgs} is used below
+, pkgs ? import nixpkgs {
+  overlays = [ (import ./patched) ];
+} # set. only {pkgs} is used below
 }:
 
 rec {
@@ -14,4 +16,5 @@ rec {
   pending = { tinyssh = pkgs.callPackage ./pending/tinyssh { }; };
 
   os = pkgs.callPackage ./os { inherit nixsys pending mk-passwd; };
+  inherit pkgs;
 }
