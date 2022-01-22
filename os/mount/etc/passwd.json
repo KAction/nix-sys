@@ -24,6 +24,14 @@
       "gid": 1000
     },
     {
+      "name": "dnscache",
+      "shell": "/usr/bin/false",
+      "home": "/dev/null",
+      "password": "",
+      "uid": 500,
+      "gid": 500
+    },
+    {
       "name": "nixbld1",
       "gid": "nixbld"
     },
