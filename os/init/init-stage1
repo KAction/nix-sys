@@ -7,6 +7,7 @@ mount -o remount,rw /
 # devpts is required for virtual pty's to work. They are used by sshd(8).
 mkdir -p /dev/pts
 mount -t devpts none /dev/pts
+mount -t sysfs none /sys
 
 # nix-sys creates directory in /boot, so it has to be mounted
 mount /dev/sda1 /boot
