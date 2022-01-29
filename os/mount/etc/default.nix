@@ -52,6 +52,11 @@ let
 
   manifest = {
     copy = {
+      # nix-build gets upset if /etc/hosts is not present at all.
+      "/etc/hosts" = {
+        path = text "127.0.0.1 localhost";
+        mode = "0444";
+      };
       "/etc/mitm.pem" = {
         path = runCommand "mitm.pem" { } ''
           cat ${mitm}/mitm.crt ${mitm}/mitm.key > $out
