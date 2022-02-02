@@ -77,7 +77,7 @@ if ! cmp -s "$config" "$config~" ; then
 		extlinux -i /boot/extlinux
 	fi
 
-	for name in menu libutil ; do
+	for name in menu libutil libcom32 ; do
 		src="$syslinux/share/syslinux/$name.c32"
 		dst="/boot/extlinux/$name.c32"
 		if ! test -f "$dst" ; then
