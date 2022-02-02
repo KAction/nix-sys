@@ -34,6 +34,7 @@ let
       name = "dnscache";
       # todo: somehow fix mess with uid/gid
       runscript = ''
+        redirfd -r 0 /dev/random
         export ROOT ${chroot}
         export IP 127.0.0.3
         export UID 500
