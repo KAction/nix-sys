@@ -58,6 +58,7 @@ let
           path = writeText "nix.conf" ''
             experimental-features = flakes nix-command
             trusted-users = user
+            secret-key-files = /secrets/nix.key
           '';
           mode = "0444";
         };
@@ -111,6 +112,7 @@ let
         "/state/log/net-eth0.1" = { mode = "700"; };
         "/state/log/nix-daemon.1" = { mode = "700"; };
         "/state/log/getty-tty1.1" = { mode = "700"; };
+        "/secrets" = { mode = "700"; };
       };
       exec = let
         path = with pkgs;
