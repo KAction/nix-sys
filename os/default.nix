@@ -16,6 +16,56 @@ let
   setup-bootloader = callPackage ./setup-bootloader { };
   init = callPackage ./init { inherit (pkgs.pkgsStatic) stdenv; };
   manifest.srv-dnscache = callPackage ./service/dnscache { inherit service; };
+  make-service =
+    # logscript has default, since in most cases redirecting stdout/stderr
+    # is disirable, otherwise /dev/tty1 will be cluttered.
+    { name, runscript, logscript ? "svlogd -ttt /state/log/${name}.1"
+    , dependencies ? (with pkgs; [ runit execline busybox ]) }:
+    let
+      when = p: s: if p then s else null;
+      m = {
+        symlink = {
+          "/service/${name}" = {
+            path = pkgs.stdenv.mkDerivation {
+              name = "${name}.sv";
+              dontUnpack = true;
+              installPhase = ''
+                mkdir $out
+                cat << EOF > $out/run
+                #!$execline/bin/execlineb -P
+                export PATH $path
+                fdmove -c 2 1
+                $runscript
+                EOF
+                chmod +x $out/run
+
+                if [ "$logscript" ] ; then
+                  mkdir $out/log
+                  cat << EOF > $out/log/run
+                #!$execline/bin/execlineb -P
+                export PATH $path
+                fdmove -c 2 1
+                $logscript
+                EOF
+                  chmod +x $out/log/run
+                  ln -sf /state/supervise/log.$name $out/log/supervise
+                fi
+                ln -sf /state/supervise/$name $out/supervise
+              '';
+              path = pkgs.lib.makeBinPath dependencies;
+              inherit runscript logscript;
+              inherit (pkgs) execline;
+            };
+          };
+        };
+        mkdir = {
+          ${when (logscript != null) "/state/log/${name}.1"} = {
+            mode = "700";
+          };
+        };
+      };
+    in writeText "manifest.json" (builtins.toJSON m);
+
   service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
@@ -51,6 +101,12 @@ let
       inherit runscript logscript;
       inherit (pkgs) execline;
     };
+
+  manifest.getty-tty1 = make-service {
+    name = "getty-tty1";
+    runscript = "getty -l login -i 0 /dev/tty1";
+  };
+
   manifest.main = let
     m = {
       copy = {
@@ -68,12 +124,6 @@ let
         "/dev/stdin" = { path = "/proc/self/fd/0"; };
         "/dev/stdout" = { path = "/proc/self/fd/1"; };
         "/dev/stderr" = { path = "/proc/self/fd/2"; };
-        "/service/getty-tty1" = {
-          path = service {
-            name = "getty-tty1";
-            runscript = "getty -l login -i 0 /dev/tty1";
-          };
-        };
         "/service/nix-daemon" = {
           path = service {
             name = "nix-daemon";
