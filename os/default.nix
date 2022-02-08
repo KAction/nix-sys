@@ -106,6 +106,13 @@ let
     name = "getty-tty1";
     runscript = "getty -l login -i 0 /dev/tty1";
   };
+  manifest.nix-daemon = make-service {
+    name = "nix-daemon";
+    runscript = ''
+      export TMPDIR /dev/shm
+      exec -a nix-daemon ${pkgs.nix}/bin/nix-daemon
+    '';
+  };
 
   manifest.main = let
     m = {
@@ -124,15 +131,6 @@ let
         "/dev/stdin" = { path = "/proc/self/fd/0"; };
         "/dev/stdout" = { path = "/proc/self/fd/1"; };
         "/dev/stderr" = { path = "/proc/self/fd/2"; };
-        "/service/nix-daemon" = {
-          path = service {
-            name = "nix-daemon";
-            runscript = ''
-              export TMPDIR /dev/shm
-              exec -a nix-daemon ${pkgs.nix}/bin/nix-daemon
-            '';
-          };
-        };
         "/service/net-eth0" = {
           path = service {
             name = "net-eth0";
@@ -160,8 +158,6 @@ let
         "/state/log/sshd.1" = { mode = "700"; };
         "/state/log/tinyssh.1" = { mode = "700"; };
         "/state/log/net-eth0.1" = { mode = "700"; };
-        "/state/log/nix-daemon.1" = { mode = "700"; };
-        "/state/log/getty-tty1.1" = { mode = "700"; };
         "/secrets" = { mode = "700"; };
       };
       exec = let
