@@ -66,42 +66,6 @@ let
       };
     in writeText "manifest.json" (builtins.toJSON m);
 
-  service =
-    # logscript has default, since in most cases redirecting stdout/stderr
-    # is disirable, otherwise /dev/tty1 will be cluttered.
-    { name, runscript, logscript ? "svlogd -ttt /state/log/${name}.1"
-    , dependencies ? (with pkgs; [ runit execline busybox ]) }:
-    pkgs.stdenv.mkDerivation {
-      name = "${name}.sv";
-      dontUnpack = true;
-      installPhase = ''
-        mkdir $out
-        cat << EOF > $out/run
-        #!$execline/bin/execlineb -P
-        export PATH $path
-        fdmove -c 2 1
-        $runscript
-        EOF
-        chmod +x $out/run
-
-        if [ "$logscript" ] ; then
-          mkdir $out/log
-          cat << EOF > $out/log/run
-        #!$execline/bin/execlineb -P
-        export PATH $path
-        fdmove -c 2 1
-        $logscript
-        EOF
-          chmod +x $out/log/run
-          ln -sf /state/supervise/log.$name $out/log/supervise
-        fi
-        ln -sf /state/supervise/$name $out/supervise
-      '';
-      path = pkgs.lib.makeBinPath dependencies;
-      inherit runscript logscript;
-      inherit (pkgs) execline;
-    };
-
   manifest.getty-tty1 = make-service {
     name = "getty-tty1";
     runscript = "getty -l login -i 0 /dev/tty1";
