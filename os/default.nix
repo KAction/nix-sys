@@ -113,6 +113,21 @@ let
       exec -a nix-daemon ${pkgs.nix}/bin/nix-daemon
     '';
   };
+  manifest.sshd = make-service {
+    name = "sshd";
+    runscript = ''
+      busybox tcpsvd 0 22 tinysshd -v /state/identity/tinyssh
+    '';
+    dependencies = with pkgs; [ busybox execline pending.tinyssh ];
+  };
+  manifest.net-eth0 = make-service {
+    name = "net-eth0";
+    runscript = ''
+      if { ip link set up dev eth0 }
+      udhcpc -R -i eth0 -f
+    '';
+
+  };
 
   manifest.main = let
     m = {
@@ -131,33 +146,12 @@ let
         "/dev/stdin" = { path = "/proc/self/fd/0"; };
         "/dev/stdout" = { path = "/proc/self/fd/1"; };
         "/dev/stderr" = { path = "/proc/self/fd/2"; };
-        "/service/net-eth0" = {
-          path = service {
-            name = "net-eth0";
-            runscript = ''
-              if { ip link set up dev eth0 }
-              udhcpc -R -i eth0 -f
-            '';
-          };
-        };
-        "/service/sshd" = {
-          path = service {
-            name = "sshd";
-            runscript = ''
-              busybox tcpsvd 0 22 tinysshd -v /state/identity/tinyssh
-            '';
-            dependencies = with pkgs; [ busybox execline pending.tinyssh ];
-          };
-        };
       };
       mkdir = {
         "/boot/kernel" = { mode = "755"; };
         "/boot/kernel/hash" = { mode = "755"; };
         "/boot/kernel/conf" = { mode = "755"; };
         "/state/supervise" = { mode = "700"; };
-        "/state/log/sshd.1" = { mode = "700"; };
-        "/state/log/tinyssh.1" = { mode = "700"; };
-        "/state/log/net-eth0.1" = { mode = "700"; };
         "/secrets" = { mode = "700"; };
       };
       exec = let
