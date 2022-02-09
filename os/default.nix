@@ -15,7 +15,7 @@ let
   kernel = callPackage ./linux { };
   setup-bootloader = callPackage ./setup-bootloader { };
   init = callPackage ./init { inherit (pkgs.pkgsStatic) stdenv; };
-  manifest.srv-dnscache = callPackage ./service/dnscache { inherit service; };
+  manifest.srv-dnscache = callPackage ./service/dnscache { inherit make-service; };
   make-service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
