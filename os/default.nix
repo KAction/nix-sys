@@ -92,6 +92,12 @@ let
     '';
 
   };
+  manifest.ntpd = make-service {
+    name = "ntpd";
+    runscript = ''
+      ntpd -dd -n -p 0.pool.ntp.org
+    '';
+  };
 
   manifest.main = let
     m = {
