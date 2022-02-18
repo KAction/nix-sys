@@ -15,42 +15,84 @@ let
   kernel = callPackage ./linux { };
   setup-bootloader = callPackage ./setup-bootloader { };
   init = callPackage ./init { inherit (pkgs.pkgsStatic) stdenv; };
-  manifest.srv-dnscache = callPackage ./service/dnscache { inherit service; };
-  service =
+  manifest.srv-dnscache = callPackage ./service/dnscache { inherit make-service; };
+  make-service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
     { name, runscript, logscript ? "svlogd -ttt /state/log/${name}.1"
     , dependencies ? (with pkgs; [ runit execline busybox ]) }:
-    pkgs.stdenv.mkDerivation {
-      name = "${name}.sv";
-      dontUnpack = true;
-      installPhase = ''
-        mkdir $out
-        cat << EOF > $out/run
-        #!$execline/bin/execlineb -P
-        export PATH $path
-        fdmove -c 2 1
-        $runscript
-        EOF
-        chmod +x $out/run
+    let
+      when = p: s: if p then s else null;
+      m = {
+        symlink = {
+          "/service/${name}" = {
+            path = pkgs.stdenv.mkDerivation {
+              name = "${name}.sv";
+              dontUnpack = true;
+              installPhase = ''
+                mkdir $out
+                cat << EOF > $out/run
+                #!$execline/bin/execlineb -P
+                export PATH $path
+                fdmove -c 2 1
+                $runscript
+                EOF
+                chmod +x $out/run
 
-        if [ "$logscript" ] ; then
-          mkdir $out/log
-          cat << EOF > $out/log/run
-        #!$execline/bin/execlineb -P
-        export PATH $path
-        fdmove -c 2 1
-        $logscript
-        EOF
-          chmod +x $out/log/run
-          ln -sf /state/supervise/log.$name $out/log/supervise
-        fi
-        ln -sf /state/supervise/$name $out/supervise
-      '';
-      path = pkgs.lib.makeBinPath dependencies;
-      inherit runscript logscript;
-      inherit (pkgs) execline;
-    };
+                if [ "$logscript" ] ; then
+                  mkdir $out/log
+                  cat << EOF > $out/log/run
+                #!$execline/bin/execlineb -P
+                export PATH $path
+                fdmove -c 2 1
+                $logscript
+                EOF
+                  chmod +x $out/log/run
+                  ln -sf /state/supervise/log.$name $out/log/supervise
+                fi
+                ln -sf /state/supervise/$name $out/supervise
+              '';
+              path = pkgs.lib.makeBinPath dependencies;
+              inherit runscript logscript;
+              inherit (pkgs) execline;
+            };
+          };
+        };
+        mkdir = {
+          ${when (logscript != null) "/state/log/${name}.1"} = {
+            mode = "700";
+          };
+        };
+      };
+    in writeText "manifest.json" (builtins.toJSON m);
+
+  manifest.getty-tty1 = make-service {
+    name = "getty-tty1";
+    runscript = "getty -l login -i 0 /dev/tty1";
+  };
+  manifest.nix-daemon = make-service {
+    name = "nix-daemon";
+    runscript = ''
+      export TMPDIR /dev/shm
+      exec -a nix-daemon ${pkgs.nix}/bin/nix-daemon
+    '';
+  };
+  manifest.sshd = make-service {
+    name = "sshd";
+    runscript = ''
+      busybox tcpsvd 0 22 tinysshd -v /state/identity/tinyssh
+    '';
+    dependencies = with pkgs; [ busybox execline pending.tinyssh ];
+  };
+  manifest.net-eth0 = make-service {
+    name = "net-eth0";
+    runscript = ''
+      if { ip link set up dev eth0 }
+      udhcpc -R -i eth0 -f
+    '';
+
+  };
+
   manifest.main = let
     m = {
       copy = {
@@ -68,50 +110,12 @@ let
         "/dev/stdin" = { path = "/proc/self/fd/0"; };
         "/dev/stdout" = { path = "/proc/self/fd/1"; };
         "/dev/stderr" = { path = "/proc/self/fd/2"; };
-        "/service/getty-tty1" = {
-          path = service {
-            name = "getty-tty1";
-            runscript = "getty -l login -i 0 /dev/tty1";
-          };
-        };
-        "/service/nix-daemon" = {
-          path = service {
-            name = "nix-daemon";
-            runscript = ''
-              export TMPDIR /dev/shm
-              exec -a nix-daemon ${pkgs.nix}/bin/nix-daemon
-            '';
-          };
-        };
-        "/service/net-eth0" = {
-          path = service {
-            name = "net-eth0";
-            runscript = ''
-              if { ip link set up dev eth0 }
-              udhcpc -R -i eth0 -f
-            '';
-          };
-        };
-        "/service/sshd" = {
-          path = service {
-            name = "sshd";
-            runscript = ''
-              busybox tcpsvd 0 22 tinysshd -v /state/identity/tinyssh
-            '';
-            dependencies = with pkgs; [ busybox execline pending.tinyssh ];
-          };
-        };
       };
       mkdir = {
         "/boot/kernel" = { mode = "755"; };
         "/boot/kernel/hash" = { mode = "755"; };
         "/boot/kernel/conf" = { mode = "755"; };
         "/state/supervise" = { mode = "700"; };
-        "/state/log/sshd.1" = { mode = "700"; };
-        "/state/log/tinyssh.1" = { mode = "700"; };
-        "/state/log/net-eth0.1" = { mode = "700"; };
-        "/state/log/nix-daemon.1" = { mode = "700"; };
-        "/state/log/getty-tty1.1" = { mode = "700"; };
         "/secrets" = { mode = "700"; };
       };
       exec = let
