@@ -1,4 +1,4 @@
-{ lib, haskell, version ? "8107" }:
+{ lib, fetchgit, haskell, version ? "8107" }:
 
 let
   reckless = drv: with haskell.lib; unmarkBroken (dontCheck (doJailbreak drv));
@@ -7,6 +7,13 @@ let
     overrides = self: super: {
       state-plus = reckless super.state-plus;
       test-simple = reckless super.test-simple;
+      linux-capabilities =
+        let src = fetchgit {
+          url = "https://git.sr.ht/~kaction/linux-capabilities";
+          rev = "v1.1.0.0";
+          sha256 = "043by5pimkxlxpr33kb8d1pnx06jyw3pbdyk635vga8hiqz8bifg";
+        };
+        in self.callCabal2nix "linux-capabilities" src { };
     };
   };
   drv = packages.callCabal2nix "nixsys-preprocess" ./. { };

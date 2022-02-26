@@ -5,6 +5,7 @@
 #include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/xattr.h>
 #include <unistd.h>
 #include <stdio.h>
 
@@ -15,6 +16,7 @@ struct copy_a {
 	const char *tmp;
 	const char *destination;
 	const char *backup;
+	const char *capabilities;
 	mode_t mode;
 	uid_t owner;
 	gid_t group;
@@ -105,6 +107,14 @@ static int prepare_mkdir(const struct mkdir_a *ptr)
 	return 0;
 }
 
+static inline int set_capabilities(const char *path, const char *value)
+{
+	if (!value) {
+		return 0;
+	}
+	return lsetxattr(path, "security.capability", value, 20, 0);
+}
+
 static int prepare_copy(const struct copy_a *ptr)
 {
 	int err;
@@ -153,6 +163,11 @@ static int prepare_copy(const struct copy_a *ptr)
 			write2("fail (can't set owner/group)");
 			return 1;
 		}
+	}
+
+	if (set_capabilities(ptr->tmp, ptr->capabilities) != 0) {
+		write2("fail (can't set capabilities)");
+		return 1;
 	}
 
 	write2("ok\n");

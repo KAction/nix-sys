@@ -16,6 +16,9 @@ library:
     - vector
     - pure-cdb
     - unordered-containers
+    - microlens
+    - linux-capabilities
+    - vector
   exposed-modules:
     - NixSys.Main
 
