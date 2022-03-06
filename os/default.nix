@@ -15,7 +15,8 @@ let
   kernel = callPackage ./linux { };
   setup-bootloader = callPackage ./setup-bootloader { };
   init = callPackage ./init { inherit (pkgs.pkgsStatic) stdenv; };
-  manifest.srv-dnscache = callPackage ./service/dnscache { inherit make-service; };
+  manifest.srv-dnscache =
+    callPackage ./service/dnscache { inherit make-service; };
   make-service =
     # logscript has default, since in most cases redirecting stdout/stderr
     # is disirable, otherwise /dev/tty1 will be cluttered.
@@ -92,10 +93,25 @@ let
     '';
 
   };
+
+  manifest.ntpd-wrapper = let
+    m = {
+      copy = {
+        "/wrap/cap/ntpd" = {
+          path = cwrap "${pkgs.busybox}/bin/ntpd";
+          mode = "0555";
+          capabilities.permitted = [ "sys_time" ];
+          capabilities.inheritable = [ "sys_time" ];
+        };
+      };
+    };
+  in writeText "manifest.json" (builtins.toJSON m);
+
   manifest.ntpd = make-service {
     name = "ntpd";
     runscript = ''
-      ntpd -dd -n -p 0.pool.ntp.org
+      chpst -u ntpd:ntpd
+        /wrap/cap/ntpd -dd -n -p 0.pool.ntp.org
     '';
   };
 

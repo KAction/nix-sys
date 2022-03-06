@@ -7,6 +7,12 @@
         "nixbld2",
         "nixbld3"
       ]
+    },
+    {
+      "name": "ntpd",
+      "users": [
+        "ntpd"
+      ]
     }
   ],
   "users": [
@@ -30,6 +36,11 @@
       "password": "",
       "uid": 500,
       "gid": 500
+    },
+    {
+      "name": "ntpd",
+      "shell": "/usr/bin/false",
+      "password": "*"
     },
     {
       "name": "nixbld1",
